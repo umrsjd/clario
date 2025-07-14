@@ -1,7 +1,9 @@
 import React from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { 
+  AuthProvider,
   Header, 
   HeroSection, 
   PartnersSection, 
@@ -11,6 +13,8 @@ import {
   CTASection, 
   Footer 
 } from "./components";
+
+const GOOGLE_CLIENT_ID = "your-google-client-id"; // You'll need to replace this
 
 const Home = () => {
   return (
@@ -29,13 +33,17 @@ const Home = () => {
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <div className="App">
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Home />} />
+            </Routes>
+          </BrowserRouter>
+        </div>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 

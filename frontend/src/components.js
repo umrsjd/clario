@@ -1,7 +1,68 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, createContext } from 'react';
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
+
+// Auth Context
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (token) {
+      // Verify token and get user info
+      axios.get(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      .then(response => {
+        setUser(response.data);
+      })
+      .catch(() => {
+        localStorage.removeItem('token');
+        setToken(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
+    }
+  }, [token]);
+
+  const login = (newToken) => {
+    localStorage.setItem('token', newToken);
+    setToken(newToken);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 // Header Component
 export const Header = () => {
+  const { user, logout } = useAuth();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
 
@@ -12,18 +73,32 @@ export const Header = () => {
           <h1 className="text-2xl font-bold text-black">calmi</h1>
         </div>
         <div className="flex items-center space-x-4">
-          <button 
-            onClick={() => setIsLoginOpen(true)}
-            className="text-black hover:text-gray-600 transition-colors"
-          >
-            log in
-          </button>
-          <button 
-            onClick={() => setIsSignupOpen(true)}
-            className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition-colors"
-          >
-            sign up
-          </button>
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-600">Hello, {user.full_name || user.email}</span>
+              <button 
+                onClick={logout}
+                className="text-black hover:text-gray-600 transition-colors"
+              >
+                log out
+              </button>
+            </div>
+          ) : (
+            <>
+              <button 
+                onClick={() => setIsLoginOpen(true)}
+                className="text-black hover:text-gray-600 transition-colors"
+              >
+                log in
+              </button>
+              <button 
+                onClick={() => setIsSignupOpen(true)}
+                className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition-colors"
+              >
+                sign up
+              </button>
+            </>
+          )}
         </div>
       </header>
       
@@ -53,14 +128,55 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const { login } = useAuth();
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mock authentication
-    console.log(`${type} attempted with:`, { email, password });
-    onClose();
+    setLoading(true);
+    setError('');
+
+    if (type === 'signup' && password !== confirmPassword) {
+      setError('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const endpoint = type === 'login' ? '/auth/login' : '/auth/register';
+      const data = type === 'login' 
+        ? { email, password }
+        : { email, password, full_name: fullName };
+
+      const response = await axios.post(`${API}${endpoint}`, data);
+      
+      login(response.data.access_token);
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      const response = await axios.post(`${API}/auth/google`, {
+        code: credentialResponse.code
+      });
+      
+      login(response.data.access_token);
+      onClose();
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Google authentication failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -78,7 +194,27 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
           </button>
         </div>
         
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-4">
+          {type === 'signup' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Full Name
+              </label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              />
+            </div>
+          )}
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Email
@@ -122,24 +258,57 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
           
           <button
             type="submit"
-            className="w-full bg-yellow-400 text-black py-2 px-4 rounded-md hover:bg-yellow-500 transition-colors font-medium"
+            disabled={loading}
+            className="w-full bg-yellow-400 text-black py-2 px-4 rounded-md hover:bg-yellow-500 transition-colors font-medium disabled:opacity-50"
           >
-            {type === 'login' ? 'Log In' : 'Sign Up'}
+            {loading ? 'Processing...' : (type === 'login' ? 'Log In' : 'Sign Up')}
           </button>
         </form>
+        
+        <div className="mt-4">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            </div>
+          </div>
+          
+          <div className="mt-4">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google authentication failed')}
+              useOneTap={false}
+              auto_select={false}
+            />
+          </div>
+        </div>
         
         <div className="mt-4 text-center text-sm text-gray-600">
           {type === 'login' ? (
             <>
               Don't have an account?{' '}
-              <button className="text-yellow-600 hover:text-yellow-700">
+              <button 
+                onClick={() => {
+                  onClose();
+                  // You might want to add a way to switch between modals
+                }}
+                className="text-yellow-600 hover:text-yellow-700"
+              >
                 Sign up
               </button>
             </>
           ) : (
             <>
               Already have an account?{' '}
-              <button className="text-yellow-600 hover:text-yellow-700">
+              <button 
+                onClick={() => {
+                  onClose();
+                  // You might want to add a way to switch between modals
+                }}
+                className="text-yellow-600 hover:text-yellow-700"
+              >
                 Log in
               </button>
             </>
@@ -153,6 +322,7 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
 // Hero Section Component
 export const HeroSection = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <>
@@ -229,40 +399,80 @@ export const HeroSection = () => {
 
 // Chat Modal Component
 export const ChatModal = ({ isOpen, onClose }) => {
-  const [messages, setMessages] = useState([
-    { id: 1, text: "Hey there! I'm calmi, your AI companion. How are you feeling today?", sender: 'ai' }
-  ]);
+  const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [conversationId, setConversationId] = useState(null);
+  const { user, token } = useAuth();
+
+  useEffect(() => {
+    if (isOpen && messages.length === 0) {
+      // Add initial message
+      setMessages([{
+        id: 1,
+        content: "Hey there! I'm calmi, your AI companion. How are you feeling today?",
+        role: 'assistant',
+        timestamp: new Date()
+      }]);
+    }
+  }, [isOpen, messages.length]);
 
   if (!isOpen) return null;
 
-  const handleSendMessage = () => {
-    if (inputMessage.trim()) {
+  const handleSendMessage = async () => {
+    if (inputMessage.trim() && user && token) {
       const newMessage = {
-        id: messages.length + 1,
-        text: inputMessage,
-        sender: 'user'
+        id: Date.now(),
+        content: inputMessage,
+        role: 'user',
+        timestamp: new Date()
       };
       
-      setMessages([...messages, newMessage]);
+      setMessages(prev => [...prev, newMessage]);
       setInputMessage('');
+      setLoading(true);
       
-      // Mock AI response
-      setTimeout(() => {
-        const aiResponse = {
-          id: messages.length + 2,
-          text: "I hear you. That's completely valid to feel that way. Tell me more about what's been on your mind lately.",
-          sender: 'ai'
+      try {
+        const response = await axios.post(`${API}/chat/send`, {
+          message: inputMessage,
+          conversation_id: conversationId
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        const aiMessage = {
+          id: Date.now() + 1,
+          content: response.data.message,
+          role: 'assistant',
+          timestamp: new Date()
         };
-        setMessages(prev => [...prev, aiResponse]);
-      }, 1000);
+        
+        setMessages(prev => [...prev, aiMessage]);
+        
+        if (!conversationId) {
+          setConversationId(response.data.conversation_id);
+        }
+      } catch (error) {
+        console.error('Error sending message:', error);
+        const errorMessage = {
+          id: Date.now() + 1,
+          content: "I'm sorry, I'm having trouble responding right now. Please try again.",
+          role: 'assistant',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setLoading(false);
+      }
+    } else if (!user) {
+      alert('Please log in to chat with calmi');
     }
   };
 
   const handleVoiceInput = () => {
     setIsListening(!isListening);
-    // Mock voice functionality
+    // Mock voice functionality - in production, integrate with Web Speech API
     if (!isListening) {
       setTimeout(() => {
         setInputMessage("I'm feeling a bit overwhelmed today...");
@@ -292,19 +502,35 @@ export const ChatModal = ({ isOpen, onClose }) => {
           
           <div className="flex-1 p-4 overflow-y-auto">
             {messages.map((message) => (
-              <div key={message.id} className={`mb-4 ${message.sender === 'user' ? 'text-right' : 'text-left'}`}>
+              <div key={message.id} className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
                 <div className={`inline-block p-3 rounded-lg max-w-xs ${
-                  message.sender === 'user' 
+                  message.role === 'user' 
                     ? 'bg-yellow-400 text-black' 
                     : 'bg-gray-100 text-gray-800'
                 }`}>
-                  {message.text}
+                  {message.content}
                 </div>
               </div>
             ))}
+            {loading && (
+              <div className="text-left mb-4">
+                <div className="inline-block p-3 rounded-lg max-w-xs bg-gray-100 text-gray-800">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="p-4 border-t">
+            {!user && (
+              <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+                Please log in to start chatting with calmi
+              </div>
+            )}
             <div className="flex space-x-2">
               <input
                 type="text"
@@ -312,11 +538,13 @@ export const ChatModal = ({ isOpen, onClose }) => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Type your message..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                disabled={!user || loading}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
               />
               <button
                 onClick={handleVoiceInput}
-                className={`p-2 rounded-md transition-colors ${
+                disabled={!user || loading}
+                className={`p-2 rounded-md transition-colors disabled:opacity-50 ${
                   isListening ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600'
                 }`}
               >
@@ -324,7 +552,8 @@ export const ChatModal = ({ isOpen, onClose }) => {
               </button>
               <button
                 onClick={handleSendMessage}
-                className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition-colors"
+                disabled={!user || loading || !inputMessage.trim()}
+                className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition-colors disabled:opacity-50"
               >
                 Send
               </button>
