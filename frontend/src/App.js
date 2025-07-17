@@ -14,7 +14,7 @@ import {
   Footer 
 } from "./components";
 
-const GOOGLE_CLIENT_ID = "your-google-client-id"; // You'll need to replace this
+const GOOGLE_CLIENT_ID = "618587939737-gb4qg37rridfr3ds1397sk19s7nihlct.apps.googleusercontent.com";
 
 const Home = () => {
   return (
