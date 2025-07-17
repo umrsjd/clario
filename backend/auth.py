@@ -31,7 +31,7 @@ oauth.register(
     client_secret=GOOGLE_CLIENT_SECRET,
     client_kwargs={
         "scope": "openid email profile",
-        "redirect_uri": "https://db83495a-0fdd-4440-bced-97d1b7356b8a.preview.emergentagent.com/auth/google"
+        "redirect_uri": "https://e7d3af4d-0a50-408f-96b8-805e419349eb.preview.emergentagent.com/auth/google"
     }
 )
 
@@ -185,7 +185,7 @@ async def google_auth(request: GoogleAuthRequest):
                     "code": request.code,
                     "client_id": GOOGLE_CLIENT_ID,
                     "client_secret": GOOGLE_CLIENT_SECRET,
-                    "redirect_uri": "https://db83495a-0fdd-4440-bced-97d1b7356b8a.preview.emergentagent.com/auth/google",
+                    "redirect_uri": "https://e7d3af4d-0a50-408f-96b8-805e419349eb.preview.emergentagent.com/auth/google",
                     "grant_type": "authorization_code",
                 }
             )
@@ -239,7 +239,7 @@ async def get_google_auth_url():
     auth_url = (
         f"https://accounts.google.com/o/oauth2/auth?"
         f"client_id={GOOGLE_CLIENT_ID}&"
-        f"redirect_uri=https://db83495a-0fdd-4440-bced-97d1b7356b8a.preview.emergentagent.com/auth/google&"
+        f"redirect_uri=https://e7d3af4d-0a50-408f-96b8-805e419349eb.preview.emergentagent.com/auth/google&"
         f"scope=openid email profile&"
         f"response_type=code&"
         f"access_type=offline&"
