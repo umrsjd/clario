@@ -6,7 +6,7 @@ import uuid
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 from emergentintegrations.llm.chat import LlmChat, UserMessage
-from .auth import get_current_user, User
+from auth import get_current_user, User
 
 # Database connection
 mongo_url = os.environ['MONGO_URL']
