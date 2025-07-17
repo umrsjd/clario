@@ -186,7 +186,7 @@ async def google_auth(request: GoogleAuthRequest):
                     "code": request.code,
                     "client_id": GOOGLE_CLIENT_ID,
                     "client_secret": GOOGLE_CLIENT_SECRET,
-                    "redirect_uri": "https://e7d3af4d-0a50-408f-96b8-805e419349eb.preview.emergentagent.com/auth/google",
+                    "redirect_uri": REDIRECT_URI,
                     "grant_type": "authorization_code",
                 }
             )
