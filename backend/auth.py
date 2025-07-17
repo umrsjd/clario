@@ -240,7 +240,7 @@ async def get_google_auth_url():
     auth_url = (
         f"https://accounts.google.com/o/oauth2/auth?"
         f"client_id={GOOGLE_CLIENT_ID}&"
-        f"redirect_uri=https://e7d3af4d-0a50-408f-96b8-805e419349eb.preview.emergentagent.com/auth/google&"
+        f"redirect_uri={REDIRECT_URI}&"
         f"scope=openid email profile&"
         f"response_type=code&"
         f"access_type=offline&"
