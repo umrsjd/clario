@@ -6,11 +6,17 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 import os
+from dotenv import load_dotenv
+from pathlib import Path
 from motor.motor_asyncio import AsyncIOMotorClient
 from authlib.integrations.starlette_client import OAuth
 from starlette.responses import JSONResponse
 import httpx
 import uuid
+
+# Load environment variables
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
 
 # Environment variables
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
