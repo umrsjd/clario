@@ -103,13 +103,22 @@ async def get_user(email: str):
         return User(**user)
     return None
 
+async def get_user_with_password(email: str):
+    """Get user with hashed password for authentication"""
+    user = await db.users.find_one({"email": email})
+    if user:
+        user["id"] = str(user["_id"])
+        return user
+    return None
+
 async def authenticate_user(email: str, password: str):
-    user = await get_user(email)
-    if not user:
+    user_data = await get_user_with_password(email)
+    if not user_data:
         return False
-    if not verify_password(password, user.hashed_password):
+    if not verify_password(password, user_data["hashed_password"]):
         return False
-    return user
+    # Return User model without hashed_password
+    return User(**user_data)
 
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     credentials_exception = HTTPException(
