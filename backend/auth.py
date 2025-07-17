@@ -32,7 +32,7 @@ oauth.register(
     client_secret=GOOGLE_CLIENT_SECRET,
     client_kwargs={
         "scope": "openid email profile",
-        "redirect_uri": "https://e7d3af4d-0a50-408f-96b8-805e419349eb.preview.emergentagent.com/auth/google"
+        "redirect_uri": REDIRECT_URI
     }
 )
 
