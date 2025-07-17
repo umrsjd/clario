@@ -4,9 +4,15 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 import uuid
 import os
+from dotenv import load_dotenv
+from pathlib import Path
 from motor.motor_asyncio import AsyncIOMotorClient
 from emergentintegrations.llm.chat import LlmChat, UserMessage
 from auth import get_current_user, User
+
+# Load environment variables
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
 
 # Database connection
 mongo_url = os.environ['MONGO_URL']
