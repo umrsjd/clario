@@ -352,15 +352,18 @@ backend:
 
   - task: "Google OAuth with Local URLs"
     implemented: true
-    working: false
+    working: true
     file: "backend/auth.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: false
         agent: "main"
         comment: "Updated REDIRECT_URI to localhost, needs testing to verify Google OAuth still works"
+      - working: true
+        agent: "testing"
+        comment: "Google OAuth URL generation working correctly with localhost redirect URI: http://localhost:3000/auth/google. Auth URL properly formatted and includes all required parameters"
 
 frontend:
   - task: "Remove Emergent Badge"
