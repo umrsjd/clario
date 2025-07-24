@@ -163,19 +163,15 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
     }
   };
 
-  const handleGoogleSuccess = async (credentialResponse) => {
+  const handleGoogleLogin = async () => {
     try {
-      setLoading(true);
-      const response = await axios.post(`${API}/auth/google`, {
-        code: credentialResponse.code
-      });
+      // Get Google OAuth URL from backend
+      const response = await axios.get(`${API}/auth/google/url`);
       
-      login(response.data.access_token);
-      onClose();
+      // Redirect to Google OAuth
+      window.location.href = response.data.url;
     } catch (err) {
-      setError(err.response?.data?.detail || 'Google authentication failed');
-    } finally {
-      setLoading(false);
+      setError('Failed to initiate Google authentication');
     }
   };
 
