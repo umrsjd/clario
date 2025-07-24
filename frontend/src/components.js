@@ -876,3 +876,77 @@ export const Footer = () => {
     </footer>
   );
 };
+
+// Google OAuth Callback Component
+export const GoogleCallback = () => {
+  const { login } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+
+        if (error) {
+          setError('Google authentication was cancelled or failed');
+          setLoading(false);
+          return;
+        }
+
+        if (!code) {
+          setError('No authorization code received from Google');
+          setLoading(false);
+          return;
+        }
+
+        // Send code to backend
+        const response = await axios.post(`${API}/auth/google`, {
+          code: code
+        });
+
+        // Login user with received token
+        login(response.data.access_token);
+        
+        // Redirect to home page
+        window.location.href = '/';
+      } catch (err) {
+        setError(err.response?.data?.detail || 'Authentication failed');
+        setLoading(false);
+      }
+    };
+
+    handleCallback();
+  }, [login]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+          <p className="text-gray-600">Completing authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-lg mb-4">{error}</div>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition-colors"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+};
