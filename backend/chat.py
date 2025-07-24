@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 from motor.motor_asyncio import AsyncIOMotorClient
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from openai import AsyncOpenAI
 from auth import get_current_user, User
 
 # Load environment variables
@@ -134,7 +134,7 @@ async def send_message(
         # Get conversation history for context
         messages = await get_conversation_messages(conversation_id, current_user.id)
         
-        # Initialize AI chat
+        # Initialize OpenAI client
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise HTTPException(
@@ -142,10 +142,13 @@ async def send_message(
                 detail="OpenAI API key not configured"
             )
         
-        chat = LlmChat(
-            api_key=api_key,
-            session_id=conversation_id,
-            system_message="""You are Calmi, a wise and empathetic AI companion designed to help users explore their thoughts, emotions, and behaviors. You are:
+        openai_client = AsyncOpenAI(api_key=api_key)
+        
+        # Prepare conversation history for context
+        conversation_messages = [
+            {
+                "role": "system",
+                "content": """You are Calmi, a wise and empathetic AI companion designed to help users explore their thoughts, emotions, and behaviors. You are:
 
 - Supportive and non-judgmental
 - Curious about the user's experiences
@@ -155,13 +158,31 @@ async def send_message(
 - Always remind users to seek professional help for serious mental health concerns
 
 Your goal is to help users process their thoughts and feelings through meaningful conversation."""
-        ).with_model("openai", "gpt-4o").with_max_tokens(500)
+            }
+        ]
         
-        # Create user message for AI
-        user_message = UserMessage(text=chat_request.message)
+        # Add conversation history
+        for msg in messages[-10:]:  # Last 10 messages for context
+            conversation_messages.append({
+                "role": msg.role,
+                "content": msg.content
+            })
+        
+        # Add current user message
+        conversation_messages.append({
+            "role": "user",
+            "content": chat_request.message
+        })
         
         # Get AI response
-        ai_response = await chat.send_message(user_message)
+        response = await openai_client.chat.completions.create(
+            model="gpt-4o",
+            messages=conversation_messages,
+            max_tokens=500,
+            temperature=0.7
+        )
+        
+        ai_response = response.choices[0].message.content
         
         # Save AI response
         ai_message_id = await save_message(
