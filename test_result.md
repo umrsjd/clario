@@ -302,186 +302,121 @@ agent_communication:
   - agent: "testing"
     message: "Comprehensive backend testing completed. All core functionality working correctly including authentication, database operations, and API endpoints. Chat functionality blocked only by OpenAI quota, not code issues."
 
-user_problem_statement: "Test the Calmi backend API that is now running, including authentication endpoints, chat endpoints, and health/status endpoints"
+user_problem_statement: "Remove Emergent branding and integrations, replace with local URLs and direct OpenAI integration to make this production-ready"
 
 backend:
-  - task: "Health Check Endpoint"
+  - task: "Remove emergentintegrations dependency"
     implemented: true
     working: true
-    file: "backend/server.py"
+    file: "backend/requirements.txt, backend/chat.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/health endpoint working correctly, returns healthy status with timestamp"
+      - working: true
+        agent: "main"
+        comment: "Removed emergentintegrations from requirements.txt and replaced with direct OpenAI integration in chat.py"
 
-  - task: "Root API Endpoint"
+  - task: "Update .env with local URLs"
     implemented: true
     working: true
-    file: "backend/server.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/ endpoint working correctly, returns 'Calmi API is running' message"
-
-  - task: "User Registration"
-    implemented: true
-    working: true
-    file: "backend/auth.py"
-    stuck_count: 1
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: false
-          agent: "testing"
-          comment: "Initial test failed due to authentication bug in get_user function"
-        - working: true
-          agent: "testing"
-          comment: "Fixed authentication bug by creating get_user_with_password function. POST /api/auth/register now works correctly, creates user and returns JWT token"
-
-  - task: "User Login"
-    implemented: true
-    working: true
-    file: "backend/auth.py"
-    stuck_count: 1
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: false
-          agent: "testing"
-          comment: "Login failed with 500 error due to AttributeError: 'User' object has no attribute 'hashed_password'"
-        - working: true
-          agent: "testing"
-          comment: "Fixed by creating separate get_user_with_password function for authentication. POST /api/auth/login now works correctly"
-
-  - task: "Get Current User"
-    implemented: true
-    working: true
-    file: "backend/auth.py"
+    file: "backend/.env"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/auth/me endpoint working correctly with JWT authentication, returns user profile data"
+      - working: true
+        agent: "main"
+        comment: "Created backend .env with localhost URLs: REDIRECT_URI=http://localhost:3000/auth/google"
 
-  - task: "Google OAuth URL"
+  - task: "Direct OpenAI Chat Integration"
     implemented: true
-    working: true
-    file: "backend/auth.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/auth/google/url endpoint working correctly, generates proper Google OAuth URL"
-
-  - task: "Authentication Protection"
-    implemented: true
-    working: true
-    file: "backend/auth.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "Minor: Authentication protection working but returns 403 instead of 401 for unauthorized access. Core functionality works correctly - protected endpoints are properly secured"
-
-  - task: "Chat Message Sending"
-    implemented: true
-    working: "NA"
+    working: false
     file: "backend/chat.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-        - working: "NA"
-          agent: "testing"
-          comment: "POST /api/chat/send endpoint implemented correctly but returns 500 due to OpenAI API quota exceeded. Authentication and request processing work properly - external service limitation only"
+      - working: false
+        agent: "main"
+        comment: "Replaced emergentintegrations.llm.chat with direct OpenAI AsyncClient integration, needs testing to verify functionality"
 
-  - task: "Get Conversations"
+  - task: "Google OAuth with Local URLs"
     implemented: true
-    working: true
-    file: "backend/chat.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/chat/conversations endpoint working correctly with authentication, returns user's conversation list"
-
-  - task: "Get Conversation History"
-    implemented: true
-    working: true
-    file: "backend/chat.py"
-    stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/chat/conversations/{id} endpoint working correctly with authentication and authorization checks"
-
-  - task: "Status Check Creation"
-    implemented: true
-    working: true
-    file: "backend/server.py"
-    stuck_count: 0
-    priority: "low"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "POST /api/status endpoint working correctly, creates status check records with UUID and timestamp"
-
-  - task: "Get Status Checks"
-    implemented: true
-    working: true
-    file: "backend/server.py"
-    stuck_count: 0
-    priority: "low"
-    needs_retesting: false
-    status_history:
-        - working: true
-          agent: "testing"
-          comment: "GET /api/status endpoint working correctly, returns list of status check records"
-
-  - task: "Error Handling"
-    implemented: true
-    working: true
+    working: false
     file: "backend/auth.py"
     stuck_count: 0
-    priority: "medium"
-    needs_retesting: false
+    priority: "high"
+    needs_retesting: true
     status_history:
-        - working: true
-          agent: "testing"
-          comment: "Error handling working correctly - invalid login returns 401, duplicate registration returns 400, proper error messages provided"
+      - working: false
+        agent: "main"
+        comment: "Updated REDIRECT_URI to localhost, needs testing to verify Google OAuth still works"
 
 frontend:
-  # No frontend testing performed as per instructions
+  - task: "Remove Emergent Badge"
+    implemented: true
+    working: true
+    file: "frontend/public/index.html"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Removed 'Made with Emergent' badge and PostHog analytics from index.html"
+
+  - task: "Update Frontend Branding"
+    implemented: true
+    working: true
+    file: "frontend/public/index.html"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Updated title to 'Calmi - Your AI Companion' and meta description"
+
+  - task: "Update Frontend .env with Local URL"
+    implemented: true
+    working: true
+    file: "frontend/.env"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Created frontend .env with REACT_APP_BACKEND_URL=http://localhost:8001"
+
+  - task: "Google OAuth Callback Handler"
+    implemented: true
+    working: false
+    file: "frontend/src/App.js, frontend/src/components.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Added GoogleCallback component and route to handle OAuth redirect, needs testing"
 
 metadata:
-  created_by: "testing_agent"
-  version: "1.0"
-  test_sequence: 1
+  created_by: "main_agent"
+  version: "1.1"
+  test_sequence: 2
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Direct OpenAI Chat Integration"
+    - "Google OAuth with Local URLs"
+    - "Google OAuth Callback Handler"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
-    - agent: "testing"
-      message: "Comprehensive backend API testing completed. Fixed critical authentication bug in auth.py. All core functionality working except chat responses due to OpenAI API quota limit (external service issue). Authentication flow, database operations, and API endpoints functioning correctly. Success rate: 92% (11/12 tasks working, 1 external service limitation)."
+  - agent: "main"
+    message: "Completed removal of all Emergent branding and integrations. Key changes: 1) Removed emergentintegrations dependency and replaced with direct OpenAI integration, 2) Updated all URLs to localhost, 3) Removed 'Made with Emergent' badge and analytics, 4) Added Google OAuth callback handler. Backend and frontend services are running. Need to test that chat functionality and Google OAuth still work with the new local setup."
