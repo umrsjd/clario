@@ -199,6 +199,11 @@ class CalmiAPITester:
 
     def test_send_chat_message(self):
         """Test POST /api/chat/send"""
+        # Make sure we have authentication
+        if not self.auth_token:
+            self.log_result("Send Chat Message", False, "No authentication token available")
+            return False
+            
         try:
             payload = {
                 "message": "Hello, I'm feeling a bit anxious today. Can you help me process these feelings?"
@@ -222,6 +227,11 @@ class CalmiAPITester:
 
     def test_get_conversations(self):
         """Test GET /api/chat/conversations"""
+        # Make sure we have authentication
+        if not self.auth_token:
+            self.log_result("Get Conversations", False, "No authentication token available")
+            return False
+            
         try:
             response = requests.get(f"{self.base_url}/chat/conversations", 
                                   headers=self.headers, timeout=10)
@@ -243,6 +253,11 @@ class CalmiAPITester:
         """Test GET /api/chat/conversations/{id}"""
         if not self.conversation_id:
             self.log_result("Get Conversation History", False, "No conversation ID available")
+            return False
+            
+        # Make sure we have authentication
+        if not self.auth_token:
+            self.log_result("Get Conversation History", False, "No authentication token available")
             return False
             
         try:
