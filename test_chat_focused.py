@@ -7,7 +7,7 @@ import requests
 import json
 import uuid
 
-BASE_URL = "https://e7d3af4d-0a50-408f-96b8-805e419349eb.preview.emergentagent.com/api"
+BASE_URL = "https://be4646ca-8dda-4649-93f6-a909b0b4589b.preview.emergentagent.com/api"
 HEADERS = {"Content-Type": "application/json"}
 
 def test_chat_flow():
