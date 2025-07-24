@@ -311,11 +311,14 @@ backend:
     file: "backend/requirements.txt, backend/chat.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Removed emergentintegrations from requirements.txt and replaced with direct OpenAI integration in chat.py"
+      - working: true
+        agent: "testing"
+        comment: "Successfully removed emergentintegrations dependency. Direct OpenAI integration implemented correctly using AsyncOpenAI client"
 
   - task: "Update .env with local URLs"
     implemented: true
