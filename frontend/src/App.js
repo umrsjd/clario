@@ -11,7 +11,8 @@ import {
   TestimonialsSection, 
   FAQSection, 
   CTASection, 
-  Footer 
+  Footer,
+  GoogleCallback
 } from "./components";
 
 const GOOGLE_CLIENT_ID = "618587939737-gb4qg37rridfr3ds1397sk19s7nihlct.apps.googleusercontent.com";
@@ -39,6 +40,7 @@ function App() {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/auth/google" element={<GoogleCallback />} />
             </Routes>
           </BrowserRouter>
         </div>
