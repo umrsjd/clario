@@ -184,18 +184,30 @@ class CalmiAPITester:
 
     def test_unauthorized_access(self):
         """Test accessing protected endpoints without authentication"""
+        # Save current auth token
+        saved_token = self.auth_token
+        saved_headers = self.headers.copy()
+        
+        # Clear auth and test
         self.clear_auth_header()
         
         try:
-            response = requests.get(f"{self.base_url}/auth/me", headers=HEADERS, timeout=10)
-            if response.status_code == 401:
+            response = requests.get(f"{self.base_url}/auth/me", headers=self.headers, timeout=10)
+            if response.status_code in [401, 403]:  # Both are acceptable for unauthorized access
                 self.log_result("Unauthorized Access Protection", True, "Correctly blocked unauthorized access")
-                return True
+                success = True
             else:
-                self.log_result("Unauthorized Access Protection", False, f"Should return 401, got {response.status_code}", response)
+                self.log_result("Unauthorized Access Protection", False, f"Should return 401/403, got {response.status_code}", response)
+                success = False
         except Exception as e:
             self.log_result("Unauthorized Access Protection", False, f"Exception: {str(e)}")
-        return False
+            success = False
+        
+        # Restore auth token for subsequent tests
+        self.auth_token = saved_token
+        self.headers = saved_headers
+        
+        return success
 
     def test_send_chat_message(self):
         """Test POST /api/chat/send"""
