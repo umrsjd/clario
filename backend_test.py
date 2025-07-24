@@ -10,8 +10,14 @@ import time
 from datetime import datetime
 import uuid
 
-# Configuration
-BASE_URL = "https://be4646ca-8dda-4649-93f6-a909b0b4589b.preview.emergentagent.com/api"
+# Configuration - Read from frontend .env file
+import os
+from dotenv import load_dotenv
+
+# Load frontend environment variables to get the backend URL
+load_dotenv('/app/frontend/.env')
+BACKEND_URL = os.getenv('REACT_APP_BACKEND_URL', 'http://localhost:8001')
+BASE_URL = f"{BACKEND_URL}/api"
 HEADERS = {"Content-Type": "application/json"}
 
 class CalmiAPITester:
