@@ -2,8 +2,15 @@ import React, { useState, useEffect, useContext, createContext } from 'react';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
+
+// Debug logging
+console.log('Environment variables:', {
+  REACT_APP_BACKEND_URL: process.env.REACT_APP_BACKEND_URL,
+  BACKEND_URL: BACKEND_URL,
+  API: API
+});
 
 // Auth Context
 const AuthContext = createContext();
@@ -70,7 +77,7 @@ export const Header = () => {
     <>
       <header className="flex items-center justify-between p-6 bg-white">
         <div className="flex items-center">
-          <h1 className="text-2xl font-bold text-black">calmi</h1>
+          <h1 className="text-2xl font-bold text-black">clario</h1>
         </div>
         <div className="flex items-center space-x-4">
           {user ? (
@@ -169,8 +176,9 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
       const response = await axios.get(`${API}/auth/google/url`);
       
       // Redirect to Google OAuth
-      window.location.href = response.data.url;
+      window.location.href = response.data.auth_url;
     } catch (err) {
+      console.error('Google OAuth error:', err);
       setError('Failed to initiate Google authentication');
     }
   };
@@ -334,7 +342,7 @@ export const HeroSection = () => {
             <div>
               <h1 className="text-6xl font-bold text-black mb-6 leading-tight">
                 it's not therapy.<br />
-                it's just calmi.
+                it's just clario.
               </h1>
               
               <p className="text-xl text-gray-600 mb-8">
@@ -413,7 +421,7 @@ export const ChatModal = ({ isOpen, onClose }) => {
       // Add initial message
       setMessages([{
         id: 1,
-        content: "Hey there! I'm calmi, your AI companion. How are you feeling today?",
+        content: "Hey there! I'm clario, your AI companion. How are you feeling today?",
         role: 'assistant',
         timestamp: new Date()
       }]);
@@ -468,7 +476,7 @@ export const ChatModal = ({ isOpen, onClose }) => {
         setLoading(false);
       }
     } else if (!user) {
-      alert('Please log in to chat with calmi');
+      alert('Please log in to chat with clario');
     }
   };
 
@@ -530,7 +538,7 @@ export const ChatModal = ({ isOpen, onClose }) => {
           <div className="p-4 border-t">
             {!user && (
               <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
-                Please log in to start chatting with calmi
+                Please log in to start chatting with clario
               </div>
             )}
             <div className="flex space-x-2">
@@ -606,7 +614,7 @@ export const FeaturesSection = () => {
           <div>
             <h3 className="text-3xl font-bold text-black mb-6">whenever, wherever</h3>
             <p className="text-lg text-gray-600 mb-8">
-              never need a friend at 3 a.m. again. just start yapping with calmi, your conversational ai for wellbeing that's ready 24/7.
+              never need a friend at 3 a.m. again. just start yapping with clario, your conversational ai for wellbeing that's ready 24/7.
             </p>
             
             <div className="space-y-6">
@@ -733,24 +741,24 @@ export const FAQSection = () => {
 
   const faqs = [
     {
-      question: "what is calmi?",
-      answer: "calmi is your conversational AI companion designed to help you explore your thoughts, emotions, and behaviors. It's not therapy, but it's a supportive tool for mental wellbeing."
+      question: "what is clario?",
+      answer: "clario is your conversational AI companion designed to help you explore your thoughts, emotions, and behaviors. It's not therapy, but it's a supportive tool for mental wellbeing."
     },
     {
-      question: "how does calmi work?",
-      answer: "calmi uses advanced AI technology to have natural conversations with you. It listens to your concerns, asks thoughtful questions, and provides insights to help you better understand yourself."
+      question: "how does clario work?",
+      answer: "clario uses advanced AI technology to have natural conversations with you. It listens to your concerns, asks thoughtful questions, and provides insights to help you better understand yourself."
     },
     {
-      question: "is calmi a replacement for traditional therapy?",
-      answer: "No, calmi is not a replacement for professional therapy or medical treatment. It's a supportive tool that can complement professional care, but it's not a substitute for licensed mental health professionals."
+      question: "is clario a replacement for traditional therapy?",
+      answer: "No, clario is not a replacement for professional therapy or medical treatment. It's a supportive tool that can complement professional care, but it's not a substitute for licensed mental health professionals."
     },
     {
       question: "is my data secure and confidential?",
       answer: "Yes, your privacy is our top priority. All conversations are encrypted and stored securely. We never share your personal information with third parties."
     },
     {
-      question: "does calmi support multiple languages?",
-      answer: "Currently, calmi primarily supports English, but we're working on expanding to other languages to make mental health support more accessible globally."
+      question: "does clario support multiple languages?",
+      answer: "Currently, clario primarily supports English, but we're working on expanding to other languages to make mental health support more accessible globally."
     }
   ];
 
@@ -806,7 +814,7 @@ export const CTASection = () => {
             onClick={() => setIsChatOpen(true)}
             className="bg-yellow-400 text-black px-8 py-3 rounded-md text-lg font-medium hover:bg-yellow-500 transition-colors"
           >
-            try calmi free
+            try clario free
           </button>
         </div>
       </section>
@@ -829,7 +837,7 @@ export const Footer = () => {
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-xl font-bold text-black mb-4">🟡 calmi</h3>
+            <h3 className="text-xl font-bold text-black mb-4">🟡 clario</h3>
           </div>
           
           <div>
@@ -852,7 +860,7 @@ export const Footer = () => {
           
           <div>
             <p className="text-sm text-gray-600">
-              © 2025 calmi inc<br />
+              © 2025 clario inc<br />
               by derrick han & vikky nyz
             </p>
           </div>
