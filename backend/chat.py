@@ -1,18 +1,21 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional
 from datetime import datetime
 import uuid
 import os
 from dotenv import load_dotenv
 from pathlib import Path
 from motor.motor_asyncio import AsyncIOMotorClient
-from openai import AsyncOpenAI
+import google.generativeai as genai
 from auth import get_current_user, User
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
+
+# Configure Gemini
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 # Database connection
 mongo_url = os.environ['MONGO_URL']
@@ -110,19 +113,12 @@ async def send_message(
         # Get or create conversation
         conversation_id = chat_request.conversation_id
         if not conversation_id:
-            conversation_id = await create_conversation(
-                current_user.id, 
-                "New Chat"
-            )
+            conversation_id = await create_conversation(current_user.id, "New Chat")
         else:
-            # Verify user owns the conversation
             conversation = await get_conversation(conversation_id, current_user.id)
             if not conversation:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Conversation not found"
-                )
-        
+                raise HTTPException(status_code=404, detail="Conversation not found")
+
         # Save user message
         user_message_id = await save_message(
             conversation_id,
@@ -130,25 +126,16 @@ async def send_message(
             chat_request.message,
             "user"
         )
-        
-        # Get conversation history for context
+
+        # Get conversation history
         messages = await get_conversation_messages(conversation_id, current_user.id)
-        
-        # Initialize OpenAI client
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise HTTPException(
-                status_code=500,
-                detail="OpenAI API key not configured"
-            )
-        
-        openai_client = AsyncOpenAI(api_key=api_key)
-        
-        # Prepare conversation history for context
-        conversation_messages = [
+
+        # Prepare messages for Gemini
+        conversation_history = [
             {
-                "role": "system",
-                "content": """You are Calmi, a wise and empathetic AI companion designed to help users explore their thoughts, emotions, and behaviors. You are:
+                "role": "user",
+                "parts": [
+                    """You are Calmi, a wise and empathetic AI companion designed to help users explore their thoughts, emotions, and behaviors. You are:
 
 - Supportive and non-judgmental
 - Curious about the user's experiences
@@ -158,57 +145,50 @@ async def send_message(
 - Always remind users to seek professional help for serious mental health concerns
 
 Your goal is to help users process their thoughts and feelings through meaningful conversation."""
+                ]
             }
         ]
-        
-        # Add conversation history
-        for msg in messages[-10:]:  # Last 10 messages for context
-            conversation_messages.append({
+
+        # Add conversation history (last 10)
+        for msg in messages[-10:]:
+            conversation_history.append({
                 "role": msg.role,
-                "content": msg.content
+                "parts": [msg.content]
             })
-        
+
         # Add current user message
-        conversation_messages.append({
+        conversation_history.append({
             "role": "user",
-            "content": chat_request.message
+            "parts": [chat_request.message]
         })
-        
-        # Get AI response
-        response = await openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=conversation_messages,
-            max_tokens=500,
-            temperature=0.7
-        )
-        
-        ai_response = response.choices[0].message.content
-        
-        # Save AI response
+
+        # Gemini model
+        model = genai.GenerativeModel("gemini-pro")
+        response = await model.generate_content_async(conversation_history)
+        ai_response = response.text.strip()
+
+        # Save AI message
         ai_message_id = await save_message(
             conversation_id,
             current_user.id,
             ai_response,
             "assistant"
         )
-        
-        # Update conversation timestamp
+
+        # Update timestamp
         await db.conversations.update_one(
             {"_id": conversation_id},
             {"$set": {"updated_at": datetime.utcnow()}}
         )
-        
+
         return ChatResponse(
             message=ai_response,
             conversation_id=conversation_id,
             message_id=ai_message_id
         )
-        
+
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error processing message: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error processing message: {str(e)}")
 
 @router.get("/conversations", response_model=List[Conversation])
 async def get_conversations(current_user: User = Depends(get_current_user)):
@@ -229,13 +209,9 @@ async def get_conversation_history(
     conversation_id: str,
     current_user: User = Depends(get_current_user)
 ):
-    # Verify user owns the conversation
     conversation = await get_conversation(conversation_id, current_user.id)
     if not conversation:
-        raise HTTPException(
-            status_code=404,
-            detail="Conversation not found"
-        )
+        raise HTTPException(status_code=404, detail="Conversation not found")
     
     messages = await get_conversation_messages(conversation_id, current_user.id)
     
@@ -249,15 +225,10 @@ async def delete_conversation(
     conversation_id: str,
     current_user: User = Depends(get_current_user)
 ):
-    # Verify user owns the conversation
     conversation = await get_conversation(conversation_id, current_user.id)
     if not conversation:
-        raise HTTPException(
-            status_code=404,
-            detail="Conversation not found"
-        )
+        raise HTTPException(status_code=404, detail="Conversation not found")
     
-    # Delete conversation and all messages
     await db.conversations.delete_one({"_id": conversation_id})
     await db.messages.delete_many({"conversation_id": conversation_id})
     
@@ -269,13 +240,9 @@ async def update_conversation_title(
     title: str,
     current_user: User = Depends(get_current_user)
 ):
-    # Verify user owns the conversation
     conversation = await get_conversation(conversation_id, current_user.id)
     if not conversation:
-        raise HTTPException(
-            status_code=404,
-            detail="Conversation not found"
-        )
+        raise HTTPException(status_code=404, detail="Conversation not found")
     
     await db.conversations.update_one(
         {"_id": conversation_id},
