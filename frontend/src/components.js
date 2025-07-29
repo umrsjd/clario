@@ -1,6 +1,15 @@
-import React, { useState, useEffect, useContext, createContext } from 'react';
-import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import React, { useState, useEffect, useContext, createContext, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify'; // Uncomment for react-toastify
+import 'react-toastify/dist/ReactToastify.css'; // Uncomment for react-toastify
+import FourthSVG from './assets/fourth.svg';
+import FifthSVG from './assets/fifth.svg';
+import SixthSVG from './assets/six.svg';
+import logo from './assets/logoo.svg';
+import GoogleSVG from './assets/google.svg';
+import AppleSVG from './assets/apple.svg';
+import ArrowSVG from './assets/Arrow.svg';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
@@ -70,63 +79,28 @@ export const useAuth = () => {
 // Header Component
 export const Header = () => {
   const { user, logout } = useAuth();
-  const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [isSignupOpen, setIsSignupOpen] = useState(false);
 
   return (
-    <>
-      <header className="flex items-center justify-between p-6 bg-white">
-        <div className="flex items-center">
-          <h1 className="text-2xl font-bold text-black">clario</h1>
-        </div>
-        <div className="flex items-center space-x-4">
-          {user ? (
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-600">Hello, {user.full_name || user.email}</span>
-              <button 
-                onClick={logout}
-                className="text-black hover:text-gray-600 transition-colors"
-              >
-                log out
-              </button>
-            </div>
-          ) : (
-            <>
-              <button 
-                onClick={() => setIsLoginOpen(true)}
-                className="text-black hover:text-gray-600 transition-colors"
-              >
-                log in
-              </button>
-              <button 
-                onClick={() => setIsSignupOpen(true)}
-                className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition-colors"
-              >
-                sign up
-              </button>
-            </>
-          )}
-        </div>
-      </header>
-      
-      {/* Login Modal */}
-      {isLoginOpen && (
-        <AuthModal 
-          isOpen={isLoginOpen} 
-          onClose={() => setIsLoginOpen(false)} 
-          type="login"
-        />
-      )}
-      
-      {/* Signup Modal */}
-      {isSignupOpen && (
-        <AuthModal 
-          isOpen={isSignupOpen} 
-          onClose={() => setIsSignupOpen(false)} 
-          type="signup"
-        />
-      )}
-    </>
+    <header className="flex items-center justify-between px-4 py-2 bg-white">
+      <div className="flex items-center">
+        {/* Removed the clario text */}
+      </div>
+      <div className="flex items-center space-x-4">
+        {user ? (
+          <div className="flex items-center space-x-4">
+            <span className="text-gray-600">Hello, {user.full_name || user.email}</span>
+            <button
+              onClick={logout}
+              className="text-black hover:text-gray-600 transition-colors"
+            >
+              log out
+            </button>
+          </div>
+        ) : (
+          <div></div> // Removed login and signup buttons
+        )}
+      </div>
+    </header>
   );
 };
 
@@ -137,8 +111,10 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [error, setError] = useState('');
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   if (!isOpen) return null;
 
@@ -155,156 +131,239 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
 
     try {
       const endpoint = type === 'login' ? '/auth/login' : '/auth/register';
-      const data = type === 'login' 
+      const data = type === 'login'
         ? { email, password }
         : { email, password, full_name: fullName };
 
       const response = await axios.post(`${API}${endpoint}`, data);
-      
       login(response.data.access_token);
       onClose();
+      navigate('/welcome');
     } catch (err) {
-      setError(err.response?.data?.detail || 'An error occurred');
+      setError(err.response?.data?.detail || 'An error occurred during authentication');
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    if (isLoadingGoogle) return;
+    setIsLoadingGoogle(true);
+    setError('');
     try {
-      // Get Google OAuth URL from backend
-      const response = await axios.get(`${API}/auth/google/url`);
-      
-      // Redirect to Google OAuth
-      window.location.href = response.data.auth_url;
+      console.log('Initiating Google OAuth login from AuthModal');
+      const response = await axios.get(`${API}/auth/google/url`, {
+        params: { redirect_uri: 'http://localhost:3000/google-callback' }
+      });
+      if (!response.data.url) {
+        throw new Error('No authorization URL returned from backend');
+      }
+      console.log('Google OAuth URL:', response.data.url);
+      const urlParams = new URLSearchParams(new URL(response.data.url).search);
+      const state = urlParams.get('state');
+      console.log('Generated state in AuthModal:', state);
+      window.location.href = response.data.url;
     } catch (err) {
-      console.error('Google OAuth error:', err);
-      setError('Failed to initiate Google authentication');
+      console.error('Google OAuth URL error:', err);
+      const errorMessage = err.response?.data?.detail || 'Failed to initiate Google authentication';
+      setError(errorMessage);
+      alert(errorMessage); // Replace with toast.error(errorMessage) for react-toastify
+      // toast.error(errorMessage); // Uncomment for react-toastify
+    } finally {
+      setIsLoadingGoogle(false);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-8 rounded-lg w-96 max-w-md">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">
+      {/* <ToastContainer /> */} {/* Uncomment for react-toastify */}
+      <div style={{
+        background: '#fff',
+        padding: '2rem',
+        borderRadius: '0.5rem',
+        width: 'min(90%, 384px)',
+        maxWidth: '24rem'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: 'clamp(20px, 5vw, 24px)', fontWeight: 'bold' }}>
             {type === 'login' ? 'Log In' : 'Sign Up'}
           </h2>
-          <button 
+          <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
+            style={{ color: '#6B7280', ':hover': { color: '#374151' } }}
           >
             ×
           </button>
         </div>
-        
+
         {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+          <div style={{
+            marginBottom: '1rem',
+            padding: '0.75rem',
+            backgroundColor: '#FEE2E2',
+            border: '1px solid #F87171',
+            color: '#B91C1C',
+            borderRadius: '0.25rem'
+          }}>
             {error}
           </div>
         )}
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {type === 'signup' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label style={{ display: 'block', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 'medium', color: '#374151', marginBottom: '0.5rem' }}>
                 Full Name
               </label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '0.375rem',
+                  outline: 'none',
+                  ':focus': { ring: '2px solid #FBBF24' }
+                }}
               />
             </div>
           )}
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label style={{ display: 'block', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 'medium', color: '#374151', marginBottom: '0.5rem' }}>
               Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                border: '1px solid #D1D5DB',
+                borderRadius: '0.375rem',
+                outline: 'none',
+                ':focus': { ring: '2px solid #FBBF24' }
+              }}
               required
             />
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label style={{ display: 'block', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 'medium', color: '#374151', marginBottom: '0.5rem' }}>
               Password
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              style={{
+                width: '100%',
+                padding: '0.5rem 0.75rem',
+                border: '1px solid #D1D5DB',
+                borderRadius: '0.375rem',
+                outline: 'none',
+                ':focus': { ring: '2px solid #FBBF24' }
+              }}
               required
             />
           </div>
-          
+
           {type === 'signup' && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label style={{ display: 'block', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 'medium', color: '#374151', marginBottom: '0.5rem' }}>
                 Confirm Password
               </label>
               <input
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                style={{
+                  width: '100%',
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: '0.375rem',
+                  outline: 'none',
+                  ':focus': { ring: '2px solid #FBBF24' }
+                }}
                 required
               />
             </div>
           )}
-          
+
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-yellow-400 text-black py-2 px-4 rounded-md hover:bg-yellow-500 transition-colors font-medium disabled:opacity-50"
+            disabled={loading || isLoadingGoogle}
+            style={{
+              width: '100%',
+              backgroundColor: '#FBBF24',
+              color: '#000',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.375rem',
+              ':hover': { backgroundColor: '#F59E0B' },
+              fontWeight: 'medium',
+              opacity: loading || isLoadingGoogle ? '0.5' : '1'
+            }}
           >
             {loading ? 'Processing...' : (type === 'login' ? 'Log In' : 'Sign Up')}
           </button>
         </form>
-        
-        <div className="mt-4">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+
+        <div style={{ marginTop: '1rem' }}>
+          <div style={{ position: 'relative' }}>
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
+              <div style={{ width: '100%', borderTop: '1px solid #D1D5DB' }} />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
+            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', fontSize: 'clamp(12px, 3vw, 14px)' }}>
+              <span style={{ padding: '0 0.5rem', backgroundColor: '#fff', color: '#6B7280' }}>Or continue with</span>
             </div>
           </div>
-          
-          <div className="mt-4">
+
+          <div style={{ marginTop: '1rem' }}>
             <button
               onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              disabled={loading || isLoadingGoogle}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '0.5rem 1rem',
+                border: '1px solid #D1D5DB',
+                borderRadius: '0.375rem',
+                backgroundColor: '#fff',
+                fontSize: 'clamp(12px, 3vw, 14px)',
+                fontWeight: 'medium',
+                color: '#6B7280',
+                ':hover': { backgroundColor: '#F3F4F6' },
+                opacity: loading || isLoadingGoogle ? '0.5' : '1'
+              }}
             >
-              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Continue with Google
+              <img
+                src={GoogleSVG}
+                alt="Google Icon"
+                style={{
+                  width: '1.25rem',
+                  height: '1.25rem',
+                  marginRight: '0.5rem'
+                }}
+              />
+              {isLoadingGoogle ? 'Loading...' : 'Continue with Google'}
             </button>
           </div>
         </div>
-        
-        <div className="mt-4 text-center text-sm text-gray-600">
+
+        <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: 'clamp(12px, 3vw, 14px)', color: '#4B5563' }}>
           {type === 'login' ? (
             <>
               Don't have an account?{' '}
-              <button 
+              <button
                 onClick={() => {
                   onClose();
-                  // You might want to add a way to switch between modals
                 }}
-                className="text-yellow-600 hover:text-yellow-700"
+                style={{ color: '#D97706', ':hover': { color: '#B45309' } }}
               >
                 Sign up
               </button>
@@ -312,12 +371,11 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
           ) : (
             <>
               Already have an account?{' '}
-              <button 
+              <button
                 onClick={() => {
                   onClose();
-                  // You might want to add a way to switch between modals
                 }}
-                className="text-yellow-600 hover:text-yellow-700"
+                style={{ color: '#D97706', ':hover': { color: '#B45309' } }}
               >
                 Log in
               </button>
@@ -332,75 +390,806 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
 // Hero Section Component
 export const HeroSection = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const { user } = useAuth();
+  const [email, setEmail] = useState('');
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+  const { user, login } = useAuth();
+  const navigate = useNavigate();
+  const meetClarioRef = useRef(null);
+
+  const handleGoogleLogin = async () => {
+    if (isLoadingGoogle) return;
+    setIsLoadingGoogle(true);
+    try {
+      console.log('Initiating Google OAuth login from HeroSection');
+      const response = await axios.get(`${API}/auth/google/url`, {
+        params: { redirect_uri: 'http://localhost:3000/google-callback' }
+      });
+      if (!response.data.url) {
+        throw new Error('No authorization URL returned from backend');
+      }
+      console.log('Google OAuth URL:', response.data.url);
+      const urlParams = new URLSearchParams(new URL(response.data.url).search);
+      const state = urlParams.get('state');
+      console.log('Generated state in HeroSection:', state);
+      window.location.href = response.data.url;
+    } catch (err) {
+      console.error('Google OAuth URL error:', err);
+      const errorMessage = err.response?.data?.detail || 'Unable to connect to Google. Please try again later.';
+      alert(errorMessage); // Replace with toast.error(errorMessage) for react-toastify
+      // toast.error(errorMessage); // Uncomment for react-toastify
+    } finally {
+      setIsLoadingGoogle(false);
+    }
+  };
+
+  const handleAppleLogin = () => {
+    navigate('/welcome'); // Navigate to FlashScreen (Apple login not implemented)
+  };
+
+  const handleEmailSubmit = (e) => {
+    e.preventDefault();
+    if (email.trim()) {
+      navigate('/welcome'); // Navigate to FlashScreen
+      setEmail('');
+    } else {
+      alert('Please enter a valid email address');
+    }
+  };
+
+  const toggleDropdown = (index) => {
+    setOpenDropdown(openDropdown === index ? null : index);
+  };
+
+  const handleExploreClick = () => {
+    meetClarioRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <>
-      <section className="px-6 py-16 bg-white">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h1 className="text-6xl font-bold text-black mb-6 leading-tight">
-                it's not therapy.<br />
-                it's just clario.
-              </h1>
-              
-              <p className="text-xl text-gray-600 mb-8">
-                your wise, witty ai built to help you explore your thoughts, emotions, and behaviors.
-              </p>
-              
-              <button 
-                onClick={() => setIsChatOpen(true)}
-                className="bg-yellow-400 text-black px-8 py-3 rounded-md text-lg font-medium hover:bg-yellow-500 transition-colors"
+      <section style={{
+        padding: '0 1rem 2rem',
+        background: '#fff'
+      }}>
+        <div style={{
+          maxWidth: 'min(90%, 1150px)',
+          margin: '0 auto',
+          textAlign: 'center'
+        }}>
+          <h1 style={{
+            color: '#000',
+            fontFamily: 'Outfit',
+            fontSize: 'clamp(28px, 5vw, 40px)',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            marginTop: '0',
+            marginBottom: '0.5rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}>
+            <img
+              src={logo}
+              alt="Clario Logo"
+              style={{
+                width: '38px',
+                height: '38px',
+                flexShrink: 0
+              }}
+            />
+            Clario
+          </h1>
+
+          <h2 style={{
+            maxWidth: '100%',
+            color: '#1B263B',
+            fontFamily: 'Outfit',
+            fontSize: 'clamp(32px, 6vw, 56px)',
+            fontStyle: 'normal',
+            fontWeight: 400,
+            lineHeight: 'normal',
+            margin: '1rem auto'
+          }}>
+            Always adapting. Never forgetting.
+          </h2>
+
+          <p style={{
+            color: '#1B263B',
+            fontFamily: 'Poppins',
+            fontSize: 'clamp(16px, 3vw, 22px)',
+            fontStyle: 'normal',
+            fontWeight: 400,
+            lineHeight: 'normal',
+            marginBottom: '6rem'
+          }}>
+            A memory powered companion that grows with you.
+          </p>
+
+          <div style={{
+            width: 'min(95%, 550px)',
+            height: 'auto',
+            minHeight: '200px',
+            borderRadius: '20px',
+            border: '1px solid #1B263B',
+            background: '#fff',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '1.5rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: window.innerWidth <= 640 ? 'column' : 'row',
+              gap: window.innerWidth <= 640 ? '0.5rem' : '0.75rem',
+              justifyContent: 'center',
+              alignItems: window.innerWidth <= 640 ? 'center' : 'stretch',
+              width: '100%'
+            }}>
+              <button
+                onClick={handleGoogleLogin}
+                disabled={isLoadingGoogle}
+                style={{
+                  display: 'flex',
+                  width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
+                  padding: window.innerWidth <= 640 ? '0.5rem 1rem' : '0.75rem 1.5rem',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  borderRadius: '8px',
+                  border: '1px solid #999',
+                  background: '#fff',
+                  whiteSpace: 'nowrap',
+                  opacity: isLoadingGoogle ? '0.5' : '1'
+                }}
               >
-                start yapping — it's free
+                <img
+                  src={GoogleSVG}
+                  alt="Google Icon"
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    flexShrink: 0
+                  }}
+                />
+                <span style={{
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(14px, 2.5vw, 16px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal'
+                }}>
+                  {isLoadingGoogle ? 'Loading...' : 'Continue with Google'}
+                </span>
               </button>
-              
-              <p className="text-sm text-gray-500 mt-4">
-                loved by 100,000+ cool people
-              </p>
+
+              <button
+                onClick={handleAppleLogin}
+                style={{
+                  display: 'flex',
+                  width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
+                  padding: window.innerWidth <= 640 ? '0.5rem 1rem' : '0.75rem 1.5rem',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(153, 153, 153, 0.88)',
+                  background: '#fff'
+                }}
+              >
+                <img
+                  src={AppleSVG}
+                  alt="Apple Icon"
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    flexShrink: 0
+                  }}
+                />
+                <span style={{
+                  color: '#000',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(14px, 2.5vw, 16px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal'
+                }}>
+                  Continue with Apple
+                </span>
+              </button>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              marginTop: '0.5rem'
+            }}>
+              <div style={{
+                width: 'min(30%, 80px)',
+                height: '1px',
+                background: '#000'
+              }} />
+              <span style={{
+                color: '#000',
+                fontFamily: 'Outfit',
+                fontSize: 'clamp(10px, 2vw, 12px)',
+                fontStyle: 'normal',
+                fontWeight: 500,
+                lineHeight: 'normal',
+                textTransform: 'uppercase'
+              }}>
+                or
+              </span>
+              <div style={{
+                width: 'min(30%, 80px)',
+                height: '1px',
+                background: '#000'
+              }} />
+            </div>
+
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="enter your email"
+              style={{
+                width: 'min(95%, 500px)',
+                height: '40px',
+                padding: '0.5rem 1.5rem',
+                borderRadius: '8px',
+                border: '1px solid #999'
+              }}
+            />
+
+            <button
+              onClick={handleEmailSubmit}
+              style={{
+                width: 'min(95%, 500px)',
+                height: '40px',
+                padding: '0.5rem 1.5rem',
+                borderRadius: '8px',
+                background: '#1B263B'
+              }}
+            >
+              <span style={{
+                color: '#F9F9F9',
+                fontFamily: 'Outfit',
+                fontSize: 'clamp(14px, 2.5vw, 16px)',
+                fontStyle: 'normal',
+                fontWeight: 400,
+                lineHeight: 'normal'
+              }}>
+                Submit
+              </span>
+            </button>
+          </div>
+
+          <button
+            onClick={handleExploreClick}
+            style={{
+              width: 'min(50%, 160px)',
+              height: '40px',
+              borderRadius: '8px',
+              border: '1px solid #778DA9',
+              background: 'rgba(235, 245, 255, 0.10)',
+              margin: '6.5rem auto 0',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <span style={{
+              color: '#415A77',
+              fontFamily: 'Outfit',
+              fontSize: 'clamp(14px, 2.5vw, 16px)',
+              fontStyle: 'normal',
+              fontWeight: 500,
+              lineHeight: 'normal'
+            }}>
+              Explore more
+            </span>
+            <img
+              src={ArrowSVG}
+              alt="Arrow Icon"
+              style={{
+                width: '15px',
+                height: '15px',
+                strokeWidth: '1.5px',
+                stroke: '#415A77'
+              }}
+            />
+          </button>
+
+          <h2 ref={meetClarioRef} style={{
+            color: '#1B263B',
+            fontFamily: 'Outfit',
+            fontSize: 'clamp(28px, 5vw, 44px)',
+            fontStyle: 'normal',
+            fontWeight: 400,
+            lineHeight: 'normal',
+            margin: '12rem 0 0.5rem'
+          }}>
+            Meet Clario
+          </h2>
+
+          <p style={{
+            maxWidth: '100%',
+            color: '#1B263B',
+            fontFamily: 'Poppins',
+            fontSize: 'clamp(16px, 3vw, 22px)',
+            fontStyle: 'normal',
+            fontWeight: 400,
+            lineHeight: 'normal',
+            margin: '0 auto',
+            marginBottom: '6rem'
+          }}>
+            Your smart companion that remembers, learns, and grows with you more than an assistant, it’s your journey’s memory powered partner.
+          </p>
+
+          <div style={{
+            width: 'min(95%, 1150px)',
+            maxHeight: openDropdown ? '600px' : '300px',
+            borderRadius: '25px',
+            border: '2px solid rgba(153, 153, 153, 0.88)',
+            margin: '0 auto',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.75rem',
+            transition: 'max-height 0.5s ease-in-out',
+            overflow: 'hidden'
+          }}>
+            {/* First Heading */}
+            <div style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 0.75rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <img
+                  src={FourthSVG}
+                  alt="Remembers You Icon"
+                  style={{
+                    width: 'clamp(20px, 5vw, 30px)',
+                    height: 'clamp(16px, 4vw, 24px)',
+                    flexShrink: 0
+                  }}
+                />
+                <h3 style={{
+                  color: '#1B263B',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(18px, 3vw, 26px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  whiteSpace: 'normal'
+                }}>
+                  Remembers You
+                </h3>
+              </div>
+              <button onClick={() => toggleDropdown(1)} style={{
+                color: '#999',
+                fontFamily: 'Outfit',
+                fontSize: 'clamp(20px, 4vw, 36px)',
+                fontStyle: 'normal',
+                fontWeight: 400,
+                lineHeight: 'normal'
+              }}>
+                {openDropdown === 1 ? '−' : '+'}
+              </button>
+            </div>
+            {openDropdown !== 1 && (
+              <div style={{
+                width: 'min(95%, 1032.06px)',
+                height: '2px',
+                background: '#999',
+                margin: '0 0.75rem'
+              }} />
+            )}
+            {openDropdown === 1 && (
+              <>
+                <p style={{
+                  width: 'min(95%, 999px)',
+                  maxHeight: '72px',
+                  color: '#1B263B',
+                  fontFamily: 'Poppins',
+                  fontSize: 'clamp(14px, 2.5vw, 20px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  textAlign: 'left',
+                  wordWrap: 'break-word',
+                  padding: '0 1.5rem',
+                  transition: 'max-height 0.3s ease-in-out'
+                }}>
+                  Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                </p>
+                <div style={{
+                  width: 'min(95%, 1032.06px)',
+                  height: '2px',
+                  background: '#999',
+                  margin: '0 0.75rem'
+                }} />
+              </>
+            )}
+
+            {/* Second Heading */}
+            <div style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 0.75rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <img
+                  src={FifthSVG}
+                  alt="Grows With You Icon"
+                  style={{
+                    width: 'clamp(20px, 5vw, 30px)',
+                    height: 'clamp(20px, 5vw, 30px)',
+                    flexShrink: 0
+                  }}
+                />
+                <h3 style={{
+                  width: 'min(95%, 300px)',
+                  color: '#1B263B',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(18px, 3vw, 26px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  whiteSpace: 'normal'
+                }}>
+                  Grows With You
+                </h3>
+              </div>
+              <button onClick={() => toggleDropdown(2)} style={{
+                color: '#999',
+                fontFamily: 'Outfit',
+                fontSize: 'clamp(20px, 4vw, 36px)',
+                fontStyle: 'normal',
+                fontWeight: 400,
+                lineHeight: 'normal'
+              }}>
+                {openDropdown === 2 ? '−' : '+'}
+              </button>
+            </div>
+            {openDropdown !== 2 && (
+              <div style={{
+                width: 'min(95%, 1032.06px)',
+                height: '2px',
+                background: '#999',
+                margin: '0 0.75rem'
+              }} />
+            )}
+            {openDropdown === 2 && (
+              <>
+                <p style={{
+                  width: 'min(95%, 999px)',
+                  maxHeight: '72px',
+                  color: '#1B263B',
+                  fontFamily: 'Poppins',
+                  fontSize: 'clamp(14px, 2.5vw, 20px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  textAlign: 'left',
+                  wordWrap: 'break-word',
+                  padding: '0 1.5rem',
+                  transition: 'max-height 0.3s ease-in-out'
+                }}>
+                  Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                </p>
+                <div style={{
+                  width: 'min(95%, 1032.06px)',
+                  height: '2px',
+                  background: '#999',
+                  margin: '0 0.75rem'
+                }} />
+              </>
+            )}
+
+            {/* Third Heading */}
+            <div style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0 0.75rem'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <img
+                  src={SixthSVG}
+                  alt="Feels Like a Companion Icon"
+                  style={{
+                    width: 'clamp(20px, 5vw, 30px)',
+                    height: 'clamp(20px, 5vw, 30px)',
+                    flexShrink: 0
+                  }}
+                />
+                <h3 style={{
+                  width: 'min(95%, 400px)',
+                  color: '#1B263B',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(18px, 3vw, 26px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  whiteSpace: 'normal'
+                }}>
+                  Feels Like a Companion
+                </h3>
+              </div>
+              <button onClick={() => toggleDropdown(3)} style={{
+                color: '#999',
+                fontFamily: 'Outfit',
+                fontSize: 'clamp(20px, 4vw, 36px)',
+                fontStyle: 'normal',
+                fontWeight: 400,
+                lineHeight: 'normal'
+              }}>
+                {openDropdown === 3 ? '−' : '+'}
+              </button>
             </div>
             
-            <div className="flex justify-center">
-              <div className="relative">
-                <div className="bg-gradient-to-br from-orange-400 to-yellow-500 rounded-3xl p-8 w-96 h-96 shadow-2xl">
-                  <div className="bg-white rounded-2xl h-full flex flex-col">
-                    <div className="flex items-center justify-between p-4 border-b">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                      </div>
-                      <div className="text-sm text-gray-600">gen z mode</div>
-                    </div>
-                    
-                    <div className="flex-1 flex items-center justify-center">
-                      <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center">
-                        <span className="text-2xl">💭</span>
-                      </div>
-                    </div>
-                    
-                    <div className="p-4">
-                      <button 
-                        onClick={() => setIsChatOpen(true)}
-                        className="w-full bg-yellow-400 text-black py-2 px-4 rounded-md hover:bg-yellow-500 transition-colors"
-                      >
-                        begin session
-                      </button>
-                    </div>
-                  </div>
-                </div>
+            {openDropdown === 3 && (
+              <p style={{
+                width: 'min(95%, 999px)',
+                maxHeight: '72px',
+                color: '#1B263B',
+                fontFamily: 'Poppins',
+                fontSize: 'clamp(14px, 2.5vw, 20px)',
+                fontStyle: 'normal',
+                fontWeight: 400,
+                lineHeight: 'normal',
+                textAlign: 'left',
+                wordWrap: 'break-word',
+                padding: '0 1.5rem',
+                transition: 'max-height 0.3s ease-in-out'
+              }}>
+                Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+              </p>
+            )}
+          </div>
+
+          {/* FAQ Section */}
+          <div style={{ marginTop: '12rem' }}>
+            <h2 style={{
+              color: '#000',
+              fontFamily: 'Outfit',
+              fontSize: 'clamp(32px, 5vw, 44px)',
+              fontStyle: 'normal',
+              fontWeight: 400,
+              lineHeight: 'normal',
+              textAlign: 'center',
+              marginBottom: '5rem'
+            }}>
+              Frequently asked questions
+            </h2>
+
+            <div style={{
+              width: 'min(95%, 1150px)',
+              margin: '0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem'
+            }}>
+              {/* FAQ 1 */}
+              <div style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 0.75rem'
+              }}>
+                <h3 style={{
+                  color: '#1B263B',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(20px, 3vw, 26px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  whiteSpace: 'normal'
+                }}>
+                  What is Clario and how does it work?
+                </h3>
+                <button onClick={() => toggleDropdown(4)} style={{
+                  color: '#999',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(20px, 4vw, 36px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal'
+                }}>
+                  {openDropdown === 4 ? '−' : '+'}
+                </button>
               </div>
+              {openDropdown !== 4 && (
+                <div style={{
+                  width: 'min(95%, 1090.02px)',
+                  height: '2px',
+                  background: '#999',
+                  margin: '0 0.75rem'
+                }} />
+              )}
+              {openDropdown === 4 && (
+                <>
+                  <p style={{
+                    width: 'min(95%, 999px)',
+                    maxHeight: '72px',
+                    color: '#1B263B',
+                    fontFamily: 'Poppins',
+                    fontSize: 'clamp(14px, 2.5vw, 20px)',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    lineHeight: 'normal',
+                    textAlign: 'left',
+                    wordWrap: 'break-word',
+                    padding: '0 1.5rem',
+                    transition: 'max-height 0.3s ease-in-out'
+                  }}>
+                    Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                  </p>
+                  <div style={{
+                    width: 'min(95%, 1032.02px)',
+                    height: '2px',
+                    background: '#999',
+                    margin: '0 0.75rem'
+                  }} />
+                </>
+              )}
+
+              <div style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 0.75rem'
+              }}>
+                <h3 style={{
+                  color: '#1B263B',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(20px, 3vw, 26px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  whiteSpace: 'normal'
+                }}>
+                  What should I use Clario for?
+                </h3>
+                <button onClick={() => toggleDropdown(5)} style={{
+                  color: '#999',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(20px, 4vw, 36px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal'
+                }}>
+                  {openDropdown === 5 ? '−' : '+'}
+                </button>
+              </div>
+              {openDropdown !== 5 && (
+                <div style={{
+                  width: 'min(95%, 1090.02px)',
+                  height: '2px',
+                  background: '#999',
+                  margin: '0 0.75rem'
+                }} />
+              )}
+              {openDropdown === 5 && (
+                <>
+                  <p style={{
+                    width: 'min(95%, 999px)',
+                    maxHeight: '72px',
+                    color: '#1B263B',
+                    fontFamily: 'Poppins',
+                    fontSize: 'clamp(14px, 2.5vw, 20px)',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    lineHeight: 'normal',
+                    textAlign: 'left',
+                    wordWrap: 'break-word',
+                    padding: '0 1.5rem',
+                    transition: 'max-height 0.3s ease-in-out'
+                  }}>
+                    Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                  </p>
+                  <div style={{
+                    width: 'min(95%, 1032.02px)',
+                    height: '2px',
+                    background: '#999',
+                    margin: '0 0.75rem'
+                  }} />
+                </>
+              )}
+
+              {/* FAQ 3 */}
+              <div style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 0.75rem'
+              }}>
+                <h3 style={{
+                  color: '#1B263B',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(20px, 3vw, 26px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  whiteSpace: 'normal'
+                }}>
+                  How much does it cost to use?
+                </h3>
+                <button onClick={() => toggleDropdown(6)} style={{
+                  color: '#999',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(20px, 4vw, 36px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal'
+                }}>
+                  {openDropdown === 6 ? '−' : '+'}
+                </button>
+              </div>
+              {openDropdown !== 6 && (
+                <div style={{
+                  width: 'min(95%, 1090.02px)',
+                  height: '2px',
+                  background: '#999',
+                  margin: '0 0.75rem'
+                }} />
+              )}
+              {openDropdown === 6 && (
+                <p style={{
+                  width: 'min(95%, 999px)',
+                  maxHeight: '72px',
+                  color: '#1B263B',
+                  fontFamily: 'Poppins',
+                  fontSize: 'clamp(14px, 2.5vw, 20px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  textAlign: 'left',
+                  wordWrap: 'break-word',
+                  padding: '0 1.5rem',
+                  transition: 'max-height 0.3s ease-in-out'
+                }}>
+                  Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                </p>
+                
+              )}
             </div>
           </div>
         </div>
       </section>
-      
+
+      {/* Bottom Container */}
+      <div style={{
+        height: 'min(449px, 60vh)',
+        width: '100vw',
+        background: '#0D1B2A',
+        margin: 0,
+        position: 'relative'
+      }}></div>
+
       {/* Chat Modal */}
       {isChatOpen && (
-        <ChatModal 
-          isOpen={isChatOpen} 
-          onClose={() => setIsChatOpen(false)} 
+        <ChatModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
         />
       )}
     </>
@@ -438,11 +1227,11 @@ export const ChatModal = ({ isOpen, onClose }) => {
         role: 'user',
         timestamp: new Date()
       };
-      
+
       setMessages(prev => [...prev, newMessage]);
       setInputMessage('');
       setLoading(true);
-      
+
       try {
         const response = await axios.post(`${API}/chat/send`, {
           message: inputMessage,
@@ -450,16 +1239,16 @@ export const ChatModal = ({ isOpen, onClose }) => {
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         const aiMessage = {
           id: Date.now() + 1,
           content: response.data.message,
           role: 'assistant',
           timestamp: new Date()
         };
-        
+
         setMessages(prev => [...prev, aiMessage]);
-        
+
         if (!conversationId) {
           setConversationId(response.data.conversation_id);
         }
@@ -492,56 +1281,100 @@ export const ChatModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-gradient-to-br from-orange-400 to-yellow-500 rounded-3xl p-4 w-full max-w-2xl h-[80vh] mx-4">
-        <div className="bg-white rounded-2xl h-full flex flex-col">
-          <div className="flex items-center justify-between p-4 border-b">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      background: 'rgba(0, 0, 0, 0.5)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 50
+    }}>
+      <div style={{
+        background: 'linear-gradient(to bottom right, #FBBF24, #F59E0B)',
+        borderRadius: '1.5rem',
+        padding: '0.75rem',
+        width: 'min(95%, 640px)',
+        height: 'min(80vh, 600px)',
+        margin: '0 1rem'
+      }}>
+        <div style={{
+          background: '#fff',
+          borderRadius: '1rem',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '0.75rem',
+            borderBottom: '1px solid #D1D5DB'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '0.75rem', height: '0.75rem', background: '#EF4444', borderRadius: '50%' }}></div>
+              <div style={{ width: '0.75rem', height: '0.75rem', background: '#FBBF24', borderRadius: '50%' }}></div>
+              <div style={{ width: '0.75rem', height: '0.75rem', background: '#10B981', borderRadius: '50%' }}></div>
             </div>
-            <div className="text-sm text-gray-600">gen z mode</div>
-            <button 
+            <div style={{ fontSize: 'clamp(12px, 3vw, 14px)', color: '#4B5563' }}>gen z mode</div>
+            <button
               onClick={onClose}
-              className="text-gray-500 hover:text-gray-700"
+              style={{ color: '#6B7280', ':hover': { color: '#374151' } }}
             >
               ×
             </button>
           </div>
-          
-          <div className="flex-1 p-4 overflow-y-auto">
+
+          <div style={{ flex: 1, padding: '0.75rem', overflowY: 'auto' }}>
             {messages.map((message) => (
-              <div key={message.id} className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
-                <div className={`inline-block p-3 rounded-lg max-w-xs ${
-                  message.role === 'user' 
-                    ? 'bg-yellow-400 text-black' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}>
+              <div key={message.id} style={{ marginBottom: '1rem', textAlign: message.role === 'user' ? 'right' : 'left' }}>
+                <div style={{
+                  display: 'inline-block',
+                  padding: '0.75rem',
+                  borderRadius: '0.5rem',
+                  maxWidth: 'min(80%, 300px)',
+                  backgroundColor: message.role === 'user' ? '#FBBF24' : '#F3F4F6',
+                  color: message.role === 'user' ? '#000' : '#1F2937'
+                }}>
                   {message.content}
                 </div>
               </div>
             ))}
             {loading && (
-              <div className="text-left mb-4">
-                <div className="inline-block p-3 rounded-lg max-w-xs bg-gray-100 text-gray-800">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              <div style={{ textAlign: 'left', marginBottom: '1rem' }}>
+                <div style={{
+                  display: 'inline-block',
+                  padding: '0.75rem',
+                  borderRadius: '0.5rem',
+                  maxWidth: 'min(80%, 300px)',
+                  backgroundColor: '#F3F4F6',
+                  color: '#4B5563'
+                }}>
+                  <div style={{ display: 'flex', gap: '0.25rem' }}>
+                    <div style={{ width: '0.5rem', height: '0.5rem', background: '#9CA3AF', borderRadius: '50%', animation: 'bounce 0.6s infinite' }}></div>
+                    <div style={{ width: '0.5rem', height: '0.5rem', background: '#9CA3AF', borderRadius: '50%', animation: 'bounce 0.6s infinite 0.1s' }}></div>
+                    <div style={{ width: '0.5rem', height: '0.5rem', background: '#9CA3AF', borderRadius: '50%', animation: 'bounce 0.6s infinite 0.2s' }}></div>
                   </div>
                 </div>
               </div>
             )}
           </div>
-          
-          <div className="p-4 border-t">
+
+          <div style={{ padding: '0.75rem', borderTop: '1px solid #D1D5DB' }}>
             {!user && (
-              <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-700 rounded">
+              <div style={{
+                marginBottom: '1rem',
+                padding: '0.75rem',
+                backgroundColor: 'rgb(254, 243, 199)',
+                border: '1px solid rgb(251, 191, 36)',
+                color: 'rgb(180, 83, 9)',
+                borderRadius: '0.25rem'
+              }}>
                 Please log in to start chatting with clario
               </div>
             )}
-            <div className="flex space-x-2">
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
                 value={inputMessage}
@@ -549,21 +1382,40 @@ export const ChatModal = ({ isOpen, onClose }) => {
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                 placeholder="Type your message..."
                 disabled={!user || loading}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+                style={{
+                  flex: 1,
+                  padding: '0.5rem 0.75rem',
+                  border: '1px solid rgb(209, 213, 219)',
+                  borderRadius: '0.375rem',
+                  outline: 'none',
+                  ':focus': { ring: '2px solid rgb(251, 191, 36)' },
+                  opacity: !user || loading ? '0.5' : '1'
+                }}
               />
               <button
                 onClick={handleVoiceInput}
                 disabled={!user || loading}
-                className={`p-2 rounded-md transition-colors disabled:opacity-50 ${
-                  isListening ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-600'
-                }`}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '0.375rem',
+                  backgroundColor: isListening ? 'rgb(239, 68, 68)' : 'rgb(229, 231, 235)',
+                  color: isListening ? 'rgb(255, 255, 255)' : 'rgb(75, 85, 99)',
+                  ':disabled': { opacity: '0.5' }
+                }}
               >
                 🎤
               </button>
               <button
                 onClick={handleSendMessage}
                 disabled={!user || loading || !inputMessage.trim()}
-                className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition-colors disabled:opacity-50"
+                style={{
+                  backgroundColor: 'rgb(251, 191, 36)',
+                  color: 'rgb(0, 0, 0)',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.375rem',
+                  ':hover': { backgroundColor: 'rgb(245, 158, 11)' },
+                  ':disabled': { opacity: '0.5' }
+                }}
               >
                 Send
               </button>
@@ -575,386 +1427,80 @@ export const ChatModal = ({ isOpen, onClose }) => {
   );
 };
 
-// Partners Section Component
-export const PartnersSection = () => {
-  const partners = [
-    { name: "IIElevenLabs", logo: "🔊" },
-    { name: "Microsoft for Startups", logo: "🏢" },
-    { name: "AWS", logo: "☁️" },
-    { name: "inQubate", logo: "🚀" },
-    { name: "Founders Hub", logo: "🎯" }
-  ];
-
-  return (
-    <section className="px-6 py-16 bg-gray-50">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center justify-center">
-          {partners.map((partner, index) => (
-            <div key={index} className="text-center">
-              <div className="text-4xl mb-2">{partner.logo}</div>
-              <div className="text-sm text-gray-600">{partner.name}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// Features Section Component
-export const FeaturesSection = () => {
-  return (
-    <section className="px-6 py-16 bg-white">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-5xl font-bold text-black mb-6">all the good stuff</h2>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <h3 className="text-3xl font-bold text-black mb-6">whenever, wherever</h3>
-            <p className="text-lg text-gray-600 mb-8">
-              never need a friend at 3 a.m. again. just start yapping with clario, your conversational ai for wellbeing that's ready 24/7.
-            </p>
-            
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="w-6 h-6 bg-yellow-400 rounded-full flex-shrink-0 mt-1"></div>
-                <div>
-                  <h4 className="font-semibold text-black">24/7 availability</h4>
-                  <p className="text-gray-600">Always there when you need support</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <div className="w-6 h-6 bg-yellow-400 rounded-full flex-shrink-0 mt-1"></div>
-                <div>
-                  <h4 className="font-semibold text-black">Secure & confidential</h4>
-                  <p className="text-gray-600">Your conversations are private and secure</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <div className="w-6 h-6 bg-yellow-400 rounded-full flex-shrink-0 mt-1"></div>
-                <div>
-                  <h4 className="font-semibold text-black">Personalized insights</h4>
-                  <p className="text-gray-600">Learn patterns and get personalized tips</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-center">
-            <div className="relative">
-              <div className="bg-gradient-to-br from-orange-400 to-yellow-500 rounded-3xl p-6 w-80 h-80 shadow-xl">
-                <div className="bg-white rounded-2xl h-full flex flex-col">
-                  <div className="flex items-center justify-between p-3 border-b">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center">
-                      <span className="text-xl">💭</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// Testimonials Section Component
-export const TestimonialsSection = () => {
-  const testimonials = [
-    {
-      id: 1,
-      text: "I'm... speechless. I used this for less than 5 minutes and I'm already crying. I really needed this. Thank you so much.",
-      username: "@mvggotz",
-      avatar: "https://images.unsplash.com/photo-1560656788-d5b6f2e83696?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxwZW9wbGV8ZW58MHx8fHllbGxvd3wxNzUyNTE4MzU2fDA&ixlib=rb-4.1.0&q=85"
-    },
-    {
-      id: 2,
-      text: "that shit works a little bit too well.",
-      username: "@_rose_boy_1029",
-      avatar: "https://images.unsplash.com/photo-1512755051947-dea0029e93ad?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwzfHxwZW9wbGV8ZW58MHx8fHllbGxvd3wxNzUyNTE4MzU2fDA&ixlib=rb-4.1.0&q=85"
-    },
-    {
-      id: 3,
-      text: "this ateeee.",
-      username: "@aflynaaa",
-      avatar: "https://images.pexels.com/photos/1330645/pexels-photo-1330645.jpeg"
-    },
-    {
-      id: 4,
-      text: "I tried it and I can genuinely say—this is insane. I'm so amused by how good the ai is.",
-      username: "@orianagomez",
-      avatar: "https://images.pexels.com/photos/13541630/pexels-photo-13541630.jpeg"
-    },
-    {
-      id: 5,
-      text: "to be honest, I gave it a try and it's really good. I feel better now.",
-      username: "@manzanilawoo",
-      avatar: "https://images.pexels.com/photos/10168547/pexels-photo-10168547.jpeg"
-    },
-    {
-      id: 6,
-      text: "guys, it works, i swear. this made my day.",
-      username: "@alisson.music",
-      avatar: "https://images.unsplash.com/photo-1489710437720-ebb67ec84dd2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwxfHxwZW9wbGV8ZW58MHx8fHllbGxvd3wxNzUyNTE4MzU2fDA&ixlib=rb-4.1.0&q=85"
-    }
-  ];
-
-  return (
-    <section className="px-6 py-16 bg-gray-50">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {testimonials.map((testimonial) => (
-            <div key={testimonial.id} className="bg-white p-6 rounded-lg shadow-sm">
-              <p className="text-gray-800 mb-4">"{testimonial.text}"</p>
-              <div className="flex items-center space-x-3">
-                <img 
-                  src={testimonial.avatar} 
-                  alt={testimonial.username}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
-                <span className="text-sm text-gray-600">{testimonial.username}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// FAQ Section Component
-export const FAQSection = () => {
-  const [openFAQ, setOpenFAQ] = useState(null);
-
-  const faqs = [
-    {
-      question: "what is clario?",
-      answer: "clario is your conversational AI companion designed to help you explore your thoughts, emotions, and behaviors. It's not therapy, but it's a supportive tool for mental wellbeing."
-    },
-    {
-      question: "how does clario work?",
-      answer: "clario uses advanced AI technology to have natural conversations with you. It listens to your concerns, asks thoughtful questions, and provides insights to help you better understand yourself."
-    },
-    {
-      question: "is clario a replacement for traditional therapy?",
-      answer: "No, clario is not a replacement for professional therapy or medical treatment. It's a supportive tool that can complement professional care, but it's not a substitute for licensed mental health professionals."
-    },
-    {
-      question: "is my data secure and confidential?",
-      answer: "Yes, your privacy is our top priority. All conversations are encrypted and stored securely. We never share your personal information with third parties."
-    },
-    {
-      question: "does clario support multiple languages?",
-      answer: "Currently, clario primarily supports English, but we're working on expanding to other languages to make mental health support more accessible globally."
-    }
-  ];
-
-  return (
-    <section className="px-6 py-16 bg-white">
-      <div className="max-w-4xl mx-auto">
-        <h2 className="text-4xl font-bold text-black text-center mb-12">
-          frequently asked questions
-        </h2>
-        
-        <div className="space-y-4">
-          {faqs.map((faq, index) => (
-            <div key={index} className="border-b border-gray-200">
-              <button
-                onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
-                className="w-full py-6 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
-              >
-                <span className="text-lg font-medium text-black">{faq.question}</span>
-                <span className="text-2xl text-gray-400">
-                  {openFAQ === index ? '−' : '+'}
-                </span>
-              </button>
-              
-              {openFAQ === index && (
-                <div className="pb-6 text-gray-600">
-                  {faq.answer}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// CTA Section Component
-export const CTASection = () => {
-  const [isChatOpen, setIsChatOpen] = useState(false);
-
-  return (
-    <>
-      <section className="px-6 py-16 bg-gray-50">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-black mb-4">
-            get started for free
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            be heard. be understood. be better.
-          </p>
-          
-          <button 
-            onClick={() => setIsChatOpen(true)}
-            className="bg-yellow-400 text-black px-8 py-3 rounded-md text-lg font-medium hover:bg-yellow-500 transition-colors"
-          >
-            try clario free
-          </button>
-        </div>
-      </section>
-      
-      {/* Chat Modal */}
-      {isChatOpen && (
-        <ChatModal 
-          isOpen={isChatOpen} 
-          onClose={() => setIsChatOpen(false)} 
-        />
-      )}
-    </>
-  );
-};
-
-// Footer Component
-export const Footer = () => {
-  return (
-    <footer className="px-6 py-12 bg-white border-t">
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div>
-            <h3 className="text-xl font-bold text-black mb-4">🟡 clario</h3>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold text-black mb-4">socials</h4>
-            <ul className="space-y-2 text-gray-600">
-              <li><a href="#" className="hover:text-black transition-colors">instagram</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">tiktok</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">x (twitter)</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <h4 className="font-semibold text-black mb-4">legal</h4>
-            <ul className="space-y-2 text-gray-600">
-              <li><a href="#" className="hover:text-black transition-colors">privacy policy</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">terms of service</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">ai disclaimer</a></li>
-            </ul>
-          </div>
-          
-          <div>
-            <p className="text-sm text-gray-600">
-              © 2025 clario inc<br />
-              by derrick han & vikky nyz
-            </p>
-          </div>
-        </div>
-        
-        <div className="mt-8 pt-8 border-t text-center">
-          <p className="text-xs text-gray-500">
-            we use cookies (yummy) to improve your experience. essential cookies are always active.{' '}
-            <button className="underline">manage preferences</button>
-          </p>
-          <div className="mt-4 space-x-4">
-            <button className="bg-gray-800 text-white px-4 py-2 rounded text-sm">
-              reject all
-            </button>
-            <button className="bg-yellow-400 text-black px-4 py-2 rounded text-sm">
-              accept all
-            </button>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-};
-
 // Google OAuth Callback Component
 export const GoogleCallback = () => {
+  const navigate = useNavigate();
   const { login } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
+  const requestSentRef = useRef(false); // Use useRef instead of state
 
   useEffect(() => {
     const handleCallback = async () => {
+      if (requestSentRef.current) {
+        console.log('Request already sent, skipping');
+        return;
+      }
+      requestSentRef.current = true;
+      console.log('Starting Google OAuth callback handling');
+
       try {
+        // Extract authorization code and state from URL
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
-        const error = urlParams.get('error');
-
-        if (error) {
-          setError('Google authentication was cancelled or failed');
-          setLoading(false);
-          return;
-        }
-
+        const state = urlParams.get('state');
         if (!code) {
-          setError('No authorization code received from Google');
-          setLoading(false);
-          return;
+          throw new Error('No authorization code found in URL');
         }
 
-        // Send code to backend
-        const response = await axios.post(`${API}/auth/google`, {
-          code: code
-        });
-
-        // Login user with received token
+        console.log('Google Callback URL:', window.location.href);
+        console.log('Sending authorization code:', code, 'State:', state);
+        // Exchange code for token
+        const response = await axios.post(`${API}/auth/google`, { code });
         login(response.data.access_token);
-        
-        // Redirect to home page
-        window.location.href = '/';
-      } catch (err) {
-        setError(err.response?.data?.detail || 'Authentication failed');
-        setLoading(false);
+        navigate('/welcome');
+      } catch (error) {
+        const errorMessage = error.response?.data?.detail || error.message;
+        console.error('Google OAuth callback error:', errorMessage, error);
+        setError(errorMessage);
+        alert(`Authentication failed: ${errorMessage}`); // Replace with toast.error(errorMessage) for react-toastify
+        // toast.error(`Authentication failed: ${errorMessage}`); // Uncomment for react-toastify
+        navigate('/');
       }
     };
 
     handleCallback();
-  }, [login]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
-          <p className="text-gray-600">Completing authentication...</p>
-        </div>
+    return () => {
+      console.log('Cleaning up GoogleCallback useEffect');
+    };
+  }, [navigate, login]); // Dependencies unchanged
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      {/* <ToastContainer /> */} {/* Uncomment for react-toastify */}
+      <div style={{ textAlign: 'center' }}>
+        {error ? (
+          <p style={{ color: 'red' }}>Error: {error}</p>
+        ) : (
+          <>
+            <div style={{
+              animation: 'spin 1s linear infinite',
+              borderRadius: '50%',
+              height: '3rem',
+              width: '3rem',
+              border: '2px solid rgb(251, 191, 36)',
+              borderBottomColor: 'transparent',
+              margin: '0 auto 1rem'
+            }}></div>
+            <p style={{ color: 'rgb(75, 85, 99)' }}>Redirecting...</p>
+          </>
+        )}
       </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 text-lg mb-4">{error}</div>
-          <button 
-            onClick={() => window.location.href = '/'}
-            className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition-colors"
-          >
-            Back to Home
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 };

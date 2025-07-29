@@ -1,264 +1,208 @@
-from fastapi import APIRouter, HTTPException, Depends, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, EmailStr
+from fastapi import APIRouter, HTTPException, Depends
+from pydantic import BaseModel
+from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
-from typing import Optional, Dict, Any
+from fastapi.security import OAuth2PasswordBearer
+from authlib.integrations.starlette_client import OAuth, OAuthError
+from starlette.config import Config
+from starlette.requests import Request
 import os
 from dotenv import load_dotenv
-from pathlib import Path
-from motor.motor_asyncio import AsyncIOMotorClient
-from authlib.integrations.starlette_client import OAuth
-from starlette.responses import JSONResponse
-import httpx
-import uuid
 
-# Load environment variables
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+router = APIRouter()
+
+# Explicitly load .env file
+env_path = os.path.join(os.path.dirname(__file__), '.env')
+print(f"Looking for .env file at: {env_path}")
+if not os.path.exists(env_path):
+    print(f"ERROR: .env file not found at {env_path}")
+load_dotenv(env_path)
 
 # Environment variables
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-REDIRECT_URI = os.getenv("REDIRECT_URI")
+config = Config('.env')
+print("Loaded environment variables:", {
+    "GOOGLE_CLIENT_ID": os.getenv('GOOGLE_CLIENT_ID'),
+    "GOOGLE_CLIENT_SECRET": os.getenv('GOOGLE_CLIENT_SECRET'),
+    "REDIRECT_URI": os.getenv('REDIRECT_URI')
+})
+
+oauth = OAuth(config)
+try:
+    oauth.register(
+        name='google',
+        client_id=os.getenv('GOOGLE_CLIENT_ID'),
+        client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+        server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+        client_kwargs={'scope': 'openid email profile'}
+    )
+except Exception as e:
+    print(f"Failed to register Google OAuth client: {str(e)}")
+    raise Exception(f"Google OAuth client registration failed: {str(e)}")
+
+# MongoDB setup
+MONGO_URL = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
+DB_NAME = os.getenv('DB_NAME', 'test_database')
+client = AsyncIOMotorClient(MONGO_URL)
+db = client[DB_NAME]
+
+# JWT setup
+JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your-secret-key')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security = HTTPBearer()
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-# OAuth setup
-oauth = OAuth()
-oauth.register(
-    name="google",
-    client_id=GOOGLE_CLIENT_ID,
-    client_secret=GOOGLE_CLIENT_SECRET,
-    client_kwargs={
-        "scope": "openid email profile",
-        "redirect_uri": REDIRECT_URI
-    }
-)
-
-# Database connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# Router
-router = APIRouter(prefix="/auth", tags=["authentication"])
-
-# Models
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    full_name: Optional[str] = None
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class GoogleAuthRequest(BaseModel):
-    code: str
+class User(BaseModel):
+    email: str
+    password: str | None = None
+    full_name: str | None = None
+    google_id: str | None = None
 
 class Token(BaseModel):
     access_token: str
     token_type: str
 
-class TokenData(BaseModel):
-    email: Optional[str] = None
+class GoogleCallbackRequest(BaseModel):
+    code: str
 
-class User(BaseModel):
-    id: str
-    email: str
-    full_name: Optional[str] = None
-    is_active: bool = True
-    created_at: datetime
-    provider: str = "email"  # "email" or "google"
-    google_id: Optional[str] = None
+async def get_user_by_email(email: str):
+    return await db.users.find_one({"email": email})
 
-# Helper functions
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+async def create_user(user: User):
+    user_dict = user.dict(exclude_unset=True)
+    if user.password:
+        user_dict['password'] = pwd_context.hash(user.password)
+    await db.users.insert_one(user_dict)
+    return user_dict
 
-def get_password_hash(password):
-    return pwd_context.hash(password)
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+def create_access_token(data: dict):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_user(email: str):
-    user = await db.users.find_one({"email": email})
-    if user:
-        user["id"] = str(user["_id"])
-        return User(**user)
-    return None
-
-async def get_user_with_password(email: str):
-    """Get user with hashed password for authentication"""
-    user = await db.users.find_one({"email": email})
-    if user:
-        user["id"] = str(user["_id"])
-        return user
-    return None
-
-async def authenticate_user(email: str, password: str):
-    user_data = await get_user_with_password(email)
-    if not user_data:
-        return False
-    if not verify_password(password, user_data["hashed_password"]):
-        return False
-    # Return User model without hashed_password
-    return User(**user_data)
-
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+async def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
-            raise credentials_exception
-        token_data = TokenData(email=email)
+            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     except JWTError:
-        raise credentials_exception
-    user = await get_user(email=token_data.email)
+        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+    
+    user = await get_user_by_email(email)
     if user is None:
-        raise credentials_exception
+        raise HTTPException(status_code=401, detail="User not found")
     return user
 
-# Routes
-@router.post("/register", response_model=Token)
-async def register(user: UserCreate):
-    # Check if user already exists
-    existing_user = await get_user(user.email)
+@router.post("/auth/register")
+async def register(user: User):
+    existing_user = await get_user_by_email(user.email)
     if existing_user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered"
-        )
+        raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Create new user
-    hashed_password = get_password_hash(user.password)
-    user_dict = {
-        "email": user.email,
-        "hashed_password": hashed_password,
-        "full_name": user.full_name,
-        "is_active": True,
-        "created_at": datetime.utcnow(),
-        "provider": "email"
-    }
-    
-    result = await db.users.insert_one(user_dict)
-    
-    # Create access token
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
-    
+    await create_user(user)
+    access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.post("/login", response_model=Token)
-async def login(form_data: UserLogin):
-    user = await authenticate_user(form_data.email, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.email}, expires_delta=access_token_expires
-    )
+@router.post("/auth/login")
+async def login(user: User):
+    db_user = await get_user_by_email(user.email)
+    if not db_user or not pwd_context.verify(user.password, db_user['password']):
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    
+    access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/me", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_user)):
+@router.get("/auth/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
     return current_user
 
-@router.post("/google", response_model=Token)
-async def google_auth(request: GoogleAuthRequest):
+@router.get("/auth/google/url")
+async def google_login(redirect_uri: str, request: Request):
     try:
-        # Exchange code for access token
-        async with httpx.AsyncClient() as client:
-            token_response = await client.post(
-                "https://oauth2.googleapis.com/token",
-                data={
-                    "code": request.code,
-                    "client_id": GOOGLE_CLIENT_ID,
-                    "client_secret": GOOGLE_CLIENT_SECRET,
-                    "redirect_uri": REDIRECT_URI,
-                    "grant_type": "authorization_code",
-                }
-            )
-            
-            if token_response.status_code != 200:
-                raise HTTPException(status_code=400, detail="Failed to get access token")
-            
-            token_data = token_response.json()
-            access_token = token_data.get("access_token")
-            
-            # Get user info
-            user_response = await client.get(
-                "https://www.googleapis.com/oauth2/v2/userinfo",
-                headers={"Authorization": f"Bearer {access_token}"}
-            )
-            
-            if user_response.status_code != 200:
-                raise HTTPException(status_code=400, detail="Failed to get user info")
-            
-            user_info = user_response.json()
-            
-            # Check if user exists
-            existing_user = await get_user(user_info["email"])
-            
-            if not existing_user:
-                # Create new user
-                user_dict = {
-                    "email": user_info["email"],
-                    "full_name": user_info.get("name"),
-                    "is_active": True,
-                    "created_at": datetime.utcnow(),
-                    "provider": "google",
-                    "google_id": user_info["id"]
-                }
-                await db.users.insert_one(user_dict)
-            
-            # Create JWT token
-            access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-            jwt_token = create_access_token(
-                data={"sub": user_info["email"]}, expires_delta=access_token_expires
-            )
-            
-            return {"access_token": jwt_token, "token_type": "bearer"}
-            
+        if not os.getenv('GOOGLE_CLIENT_ID'):
+            raise HTTPException(status_code=500, detail="Google Client ID not found in environment variables")
+        
+        google = oauth.create_client('google')
+        if not google:
+            raise HTTPException(status_code=500, detail="Google OAuth client not configured")
+        
+        # Generate the authorization URL
+        auth_data = await google.create_authorization_url(redirect_uri=redirect_uri)
+        auth_url = auth_data.get('url')
+        state = auth_data.get('state')
+        if not auth_url or not state:
+            raise HTTPException(status_code=500, detail="Failed to generate authorization URL or state")
+        
+        print(f"Generated Google OAuth URL: {auth_url}, State: {state}")
+        print(f"Session before auth: {request.session}")
+        return {"url": auth_url}
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        print(f"Error generating Google OAuth URL: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate Google OAuth URL: {str(e)}")
 
-@router.get("/google/url")
-async def get_google_auth_url():
-    """Get Google OAuth URL for frontend"""
-    auth_url = (
-        f"https://accounts.google.com/o/oauth2/auth?"
-        f"client_id={GOOGLE_CLIENT_ID}&"
-        f"redirect_uri={REDIRECT_URI}&"
-        f"scope=openid email profile&"
-        f"response_type=code&"
-        f"access_type=offline&"
-        f"prompt=consent"
-    )
-    return {"auth_url": auth_url}
+@router.post("/auth/google")
+async def google_callback(request: Request, body: GoogleCallbackRequest):
+    try:
+        code = body.code
+        if not code:
+            print("Google OAuth error: Authorization code is missing")
+            raise HTTPException(status_code=422, detail="Missing authorization code")
+        
+        print(f"Received authorization code: {code}")
+        print(f"Session during callback: {request.session}")
+        google = oauth.create_client('google')
+        if not google:
+            print("Google OAuth error: OAuth client not configured")
+            raise HTTPException(status_code=500, detail="Google OAuth client not configured")
+        
+        # Exchange code for token
+        try:
+            token = await google.authorize_access_token(
+                request,
+                redirect_uri=os.getenv('REDIRECT_URI', 'http://localhost:3000/google-callback')
+            )
+        except OAuthError as oauth_err:
+            print(f"Google OAuth error during token exchange: {str(oauth_err)} - Error: {oauth_err.error}, Description: {oauth_err.description}")
+            raise HTTPException(status_code=422, detail=f"Failed to exchange code for token: {oauth_err.error} - {oauth_err.description}")
+        except Exception as token_err:
+            print(f"Unexpected error during token exchange: {str(token_err)}")
+            raise HTTPException(status_code=422, detail=f"Unexpected error during token exchange: {str(token_err)}")
+        
+        print(f"Received token: {token}")
+        user_info = token.get('userinfo')
+        if not user_info:
+            print("Google OAuth error: Failed to retrieve user info")
+            raise HTTPException(status_code=400, detail="Failed to retrieve user info from Google")
+        
+        email = user_info.get('email')
+        full_name = user_info.get('name')
+        google_id = user_info.get('sub')
+
+        if not email or not google_id:
+            print(f"Google OAuth error: Invalid user info - email: {email}, google_id: {google_id}")
+            raise HTTPException(status_code=400, detail="Invalid Google user info")
+        
+        existing_user = await get_user_by_email(email)
+        if not existing_user:
+            user = User(email=email, full_name=full_name, google_id=google_id)
+            await create_user(user)
+        else:
+            if not existing_user.get('google_id'):
+                await db.users.update_one(
+                    {"email": email},
+                    {"$set": {"google_id": google_id, "full_name": full_name}}
+                )
+        
+        access_token = create_access_token(data={"sub": email})
+        print(f"Generated access token for user: {email}")
+        return {"access_token": access_token, "token_type": "bearer"}
+    except Exception as e:
+        print(f"Google OAuth error: {str(e)}")
+        raise HTTPException(status_code=422, detail=f"Google OAuth error: {str(e)}")

@@ -13,21 +13,25 @@ from datetime import datetime
 from auth import router as auth_router
 from chat import router as chat_router
 
+# Load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.getenv('DB_NAME', 'test_database')]
 
-# Create the main app without a prefix
+# Create the main app
 app = FastAPI(title="Calmi API", version="1.0.0")
 
 # Add session middleware for OAuth
 app.add_middleware(
     SessionMiddleware,
-    secret_key=os.getenv("JWT_SECRET_KEY", "your-secret-key-here")
+    secret_key=os.getenv('JWT_SECRET_KEY', 'f487fe27afc6ab766f95d455b5a1aaff2eec3633dc566f1d6d47d87a3ef655ac'),
+    max_age=3600,  # Session expires after 1 hour
+    same_site='lax',  # Allow cookies in cross-site requests
+    https_only=False  # Set to True in production with HTTPS
 )
 
 # Create a router with the /api prefix
@@ -42,7 +46,7 @@ class StatusCheck(BaseModel):
 class StatusCheckCreate(BaseModel):
     client_name: str
 
-# Add your routes to the router instead of directly to app
+# Routes
 @api_router.get("/")
 async def root():
     return {"message": "Calmi API is running"}
@@ -73,8 +77,8 @@ app.include_router(api_router)
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Be specific for security
     allow_credentials=True,
-    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -89,13 +93,14 @@ logger = logging.getLogger(__name__)
 @app.on_event("startup")
 async def startup_event():
     logger.info("Calmi API starting up...")
-    
-    # Create indexes for better performance
-    await db.users.create_index("email", unique=True)
-    await db.conversations.create_index([("user_id", 1), ("updated_at", -1)])
-    await db.messages.create_index([("conversation_id", 1), ("timestamp", 1)])
-    
-    logger.info("Database indexes created successfully")
+    try:
+        await db.users.create_index("email", unique=True)
+        await db.conversations.create_index([("user_id", 1), ("updated_at", -1)])
+        await db.messages.create_index([("conversation_id", 1), ("timestamp", 1)])
+        logger.info("Database indexes created successfully")
+    except Exception as e:
+        logger.error(f"Failed to create database indexes: {str(e)}")
+        raise
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
