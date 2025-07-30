@@ -391,11 +391,14 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
 export const HeroSection = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+  const [showOtp, setShowOtp] = useState(false);
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const meetClarioRef = useRef(null);
+  const otpInputRefs = useRef([]);
 
   const handleGoogleLogin = async () => {
     if (isLoadingGoogle) return;
@@ -430,11 +433,33 @@ export const HeroSection = () => {
   const handleEmailSubmit = (e) => {
     e.preventDefault();
     if (email.trim()) {
-      navigate('/welcome'); // Navigate to FlashScreen
-      setEmail('');
+      setShowOtp(true); // Switch to OTP view
+      setEmail(email.trim());
     } else {
       alert('Please enter a valid email address');
     }
+  };
+
+  const handleOtpChange = (index, value) => {
+    if (/^[0-9]?$/.test(value)) {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+      if (value && index < 5) {
+        otpInputRefs.current[index + 1].focus();
+      }
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      otpInputRefs.current[index - 1].focus();
+    }
+  };
+
+  const handleOtpSubmit = (e) => {
+    e.preventDefault();
+    navigate('/welcome'); // Navigate to FlashScreen
   };
 
   const toggleDropdown = (index) => {
@@ -522,151 +547,237 @@ export const HeroSection = () => {
             gap: '0.75rem',
             padding: '1.5rem'
           }}>
-            <div style={{
-              display: 'flex',
-              flexDirection: window.innerWidth <= 640 ? 'column' : 'row',
-              gap: window.innerWidth <= 640 ? '0.5rem' : '0.75rem',
-              justifyContent: 'center',
-              alignItems: window.innerWidth <= 640 ? 'center' : 'stretch',
-              width: '100%'
-            }}>
-              <button
-                onClick={handleGoogleLogin}
-                disabled={isLoadingGoogle}
-                style={{
+            {!showOtp ? (
+              <>
+                <div style={{
                   display: 'flex',
-                  width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
-                  padding: window.innerWidth <= 640 ? '0.5rem 1rem' : '0.75rem 1.5rem',
+                  flexDirection: window.innerWidth <= 640 ? 'column' : 'row',
+                  gap: window.innerWidth <= 640 ? '0.5rem' : '0.75rem',
                   justifyContent: 'center',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  borderRadius: '8px',
-                  border: '1px solid #999',
-                  background: '#fff',
-                  whiteSpace: 'nowrap',
-                  opacity: isLoadingGoogle ? '0.5' : '1'
-                }}
-              >
-                <img
-                  src={GoogleSVG}
-                  alt="Google Icon"
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    flexShrink: 0
-                  }}
-                />
-                <span style={{
-                  fontFamily: 'Outfit',
-                  fontSize: 'clamp(14px, 2.5vw, 16px)',
-                  fontStyle: 'normal',
-                  fontWeight: 400,
-                  lineHeight: 'normal'
+                  alignItems: window.innerWidth <= 640 ? 'center' : 'stretch',
+                  width: '100%'
                 }}>
-                  {isLoadingGoogle ? 'Loading...' : 'Continue with Google'}
-                </span>
-              </button>
+                  <button
+                    onClick={handleGoogleLogin}
+                    disabled={isLoadingGoogle}
+                    style={{
+                      display: 'flex',
+                      width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
+                      padding: window.innerWidth <= 640 ? '0.5rem 1rem' : '0.75rem 1.5rem',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      borderRadius: '8px',
+                      border: '1px solid #999',
+                      background: '#fff',
+                      whiteSpace: 'nowrap',
+                      opacity: isLoadingGoogle ? '0.5' : '1'
+                    }}
+                  >
+                    <img
+                      src={GoogleSVG}
+                      alt="Google Icon"
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        flexShrink: 0
+                      }}
+                    />
+                    <span style={{
+                      fontFamily: 'Outfit',
+                      fontSize: 'clamp(14px, 2.5vw, 16px)',
+                      fontStyle: 'normal',
+                      fontWeight: 400,
+                      lineHeight: 'normal'
+                    }}>
+                      {isLoadingGoogle ? 'Loading...' : 'Continue with Google'}
+                    </span>
+                  </button>
 
-              <button
-                onClick={handleAppleLogin}
-                style={{
+                  <button
+                    onClick={handleAppleLogin}
+                    style={{
+                      display: 'flex',
+                      width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
+                      padding: window.innerWidth <= 640 ? '0.5rem 1rem' : '0.75rem 1.5rem',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: '0.5rem',
+                      borderRadius: '8px',
+                      border: '1px solid rgba(153, 153, 153, 0.88)',
+                      background: '#fff'
+                    }}
+                  >
+                    <img
+                      src={AppleSVG}
+                      alt="Apple Icon"
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        flexShrink: 0
+                      }}
+                    />
+                    <span style={{
+                      color: '#000',
+                      fontFamily: 'Outfit',
+                      fontSize: 'clamp(14px, 2.5vw, 16px)',
+                      fontStyle: 'normal',
+                      fontWeight: 400,
+                      lineHeight: 'normal'
+                    }}>
+                      Continue with Apple
+                    </span>
+                  </button>
+                </div>
+
+                <div style={{
                   display: 'flex',
-                  width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
-                  padding: window.innerWidth <= 640 ? '0.5rem 1rem' : '0.75rem 1.5rem',
-                  justifyContent: 'center',
                   alignItems: 'center',
                   gap: '0.5rem',
-                  borderRadius: '8px',
-                  border: '1px solid rgba(153, 153, 153, 0.88)',
-                  background: '#fff'
-                }}
-              >
-                <img
-                  src={AppleSVG}
-                  alt="Apple Icon"
+                  marginTop: '0.5rem'
+                }}>
+                  <div style={{
+                    width: 'min(30%, 80px)',
+                    height: '1px',
+                    background: '#000'
+                  }} />
+                  <span style={{
+                    color: '#000',
+                    fontFamily: 'Outfit',
+                    fontSize: 'clamp(10px, 2vw, 12px)',
+                    fontStyle: 'normal',
+                    fontWeight: 500,
+                    lineHeight: 'normal',
+                    textTransform: 'uppercase'
+                  }}>
+                    or
+                  </span>
+                  <div style={{
+                    width: 'min(30%, 80px)',
+                    height: '1px',
+                    background: '#000'
+                  }} />
+                </div>
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="enter your email"
                   style={{
-                    width: '18px',
-                    height: '18px',
-                    flexShrink: 0
+                    width: 'min(95%, 500px)',
+                    height: '40px',
+                    padding: '0.5rem 1.5rem',
+                    borderRadius: '8px',
+                    border: '1px solid #999'
                   }}
                 />
-                <span style={{
+
+                <button
+                  onClick={handleEmailSubmit}
+                  style={{
+                    width: 'min(95%, 500px)',
+                    height: '40px',
+                    padding: '0.5rem 1.5rem',
+                    borderRadius: '8px',
+                    background: '#1B263B'
+                  }}
+                >
+                  <span style={{
+                    color: '#F9F9F9',
+                    fontFamily: 'Outfit',
+                    fontSize: 'clamp(14px, 2.5vw, 16px)',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    lineHeight: 'normal'
+                  }}>
+                    Send code
+                  </span>
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 style={{
                   color: '#000',
                   fontFamily: 'Outfit',
-                  fontSize: 'clamp(14px, 2.5vw, 16px)',
+                  fontSize: 'clamp(18px, 4vw, 24px)',
                   fontStyle: 'normal',
                   fontWeight: 400,
-                  lineHeight: 'normal'
+                  lineHeight: 'normal',
+                  marginBottom: '0rem'
                 }}>
-                  Continue with Apple
-                </span>
-              </button>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginTop: '0.5rem'
-            }}>
-              <div style={{
-                width: 'min(30%, 80px)',
-                height: '1px',
-                background: '#000'
-              }} />
-              <span style={{
-                color: '#000',
-                fontFamily: 'Outfit',
-                fontSize: 'clamp(10px, 2vw, 12px)',
-                fontStyle: 'normal',
-                fontWeight: 500,
-                lineHeight: 'normal',
-                textTransform: 'uppercase'
-              }}>
-                or
-              </span>
-              <div style={{
-                width: 'min(30%, 80px)',
-                height: '1px',
-                background: '#000'
-              }} />
-            </div>
-
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="enter your email"
-              style={{
-                width: 'min(95%, 500px)',
-                height: '40px',
-                padding: '0.5rem 1.5rem',
-                borderRadius: '8px',
-                border: '1px solid #999'
-              }}
-            />
-
-            <button
-              onClick={handleEmailSubmit}
-              style={{
-                width: 'min(95%, 500px)',
-                height: '40px',
-                padding: '0.5rem 1.5rem',
-                borderRadius: '8px',
-                background: '#1B263B'
-              }}
-            >
-              <span style={{
-                color: '#F9F9F9',
-                fontFamily: 'Outfit',
-                fontSize: 'clamp(14px, 2.5vw, 16px)',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                lineHeight: 'normal'
-              }}>
-                Submit
-              </span>
-            </button>
+                  Please enter the code to verify
+                </h2>
+                <p style={{
+                  color: '#50555C',
+                  textAlign: 'center',
+                  fontFamily: 'Outfit',
+                  fontSize: 'clamp(10px, 2.5vw, 12px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  marginBottom: '1.5rem'
+                }}>
+                  For verification code Check your inbox at {email}.
+                </p>
+                <div style={{
+                  display: 'flex',
+                  gap: 'clamp(4px, 1vw, 8px)',
+                  justifyContent: 'center',
+                  marginBottom: '1.5rem'
+                }}>
+                  {otp.map((digit, index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      maxLength="1"
+                      ref={(el) => (otpInputRefs.current[index] = el)}
+                      style={{
+                        width: 'clamp(36px, 10vw, 48px)',
+                        height: 'clamp(36px, 10vw, 48px)',
+                        flexShrink: 0,
+                        borderRadius: '10px',
+                        border: '0.5px solid #1B263B',
+                        textAlign: 'center',
+                        fontSize: 'clamp(16px, 4vw, 20px)',
+                        fontFamily: 'Outfit',
+                        outline: 'none'
+                      }}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={handleOtpSubmit}
+                  style={{
+                    display: 'flex',
+                    width: 'min(95%, 353px)',
+                    height: '50px',
+                    padding: '13px 33px',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    gap: '10px',
+                    flexShrink: 0,
+                    borderRadius: '10px',
+                    background: '#1B263B'
+                  }}
+                >
+                  <span style={{
+                    color: '#F9F9F9',
+                    fontFamily: 'Outfit',
+                    fontSize: 'clamp(14px, 3vw, 18px)',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    lineHeight: 'normal'
+                  }}>
+                    Submit
+                  </span>
+                </button>
+              </>
+            )}
           </div>
 
           <button
@@ -1473,7 +1584,7 @@ export const GoogleCallback = () => {
     return () => {
       console.log('Cleaning up GoogleCallback useEffect');
     };
-  }, [navigate, login]); // Dependencies unchanged
+  }, [navigate, login]);
 
   return (
     <div style={{

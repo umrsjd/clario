@@ -8,9 +8,15 @@ import thirdIcon from './assets/third.png';
 
 const FlashScreen = () => {
   const navigate = useNavigate();
-  const [showSecondSlide, setShowSecondSlide] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
   const [email, setEmail] = useState('');
+  const [selectedValues, setSelectedValues] = useState([]);
+  const [selectedMentalHealth, setSelectedMentalHealth] = useState([]);
+  const [selectedDecision, setSelectedDecision] = useState([]);
+  const [selectedCommunication, setSelectedCommunication] = useState([]);
+  const [selectedRole, setSelectedRole] = useState([]);
+  const [selectedTopics, setSelectedTopics] = useState([]);
 
   // Animation variants for first slide
   const containerVariants = {
@@ -46,6 +52,77 @@ const FlashScreen = () => {
     }, 500);
   };
 
+  const handleNextSlide = () => {
+    if (currentSlide < 7) {
+      setCurrentSlide(currentSlide + 1);
+    } else {
+      handleNavigate();
+    }
+  };
+
+  const ProgressBar = () => {
+    const totalSlides = 7; // Starting from slide 2, so 7 slides (2 through 8)
+    return (
+      <div style={{ 
+        display: 'flex', 
+        gap: '8px', 
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        justifyContent: 'center',
+        padding: '10px 16px',
+        background: '#0E0E0E',
+        zIndex: 1000,
+        width: '100%',
+        boxSizing: 'border-box',
+      }}>
+        {Array.from({ length: totalSlides }).map((_, index) => (
+          <div
+            key={index}
+            style={{
+              flex: 1,
+              height: '4px',
+              background: index + 1 <= currentSlide ? '#F9F9F9' : '#4A4A4A',
+              borderRadius: '2px',
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  const CheckboxOption = ({ label, checked, onChange }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={onChange}
+        style={{
+          width: '26px',
+          height: '26px',
+          flexShrink: 0,
+          borderRadius: '5px',
+          border: '1px solid #F9F9F9',
+          appearance: 'none',
+          background: checked ? '#F9F9F9' : 'transparent',
+          cursor: 'pointer',
+          margin: 0,
+        }}
+      />
+      <span style={{
+        color: '#FFF',
+        fontFamily: 'Poppins, sans-serif',
+        fontSize: '22px',
+        fontStyle: 'normal',
+        fontWeight: 500,
+        lineHeight: 'normal',
+      }}>
+        {label}
+      </span>
+    </div>
+  );
+
   const FirstSlide = () => (
     <motion.div
       variants={containerVariants}
@@ -76,9 +153,8 @@ const FlashScreen = () => {
             alignSelf: 'flex-start',
           }}
         />
-        
-        <motion.h1 
-          variants={itemVariants} 
+        <motion.h1
+          variants={itemVariants}
           style={{
             color: '#F9F9F9',
             fontFamily: 'Outfit, sans-serif',
@@ -93,7 +169,6 @@ const FlashScreen = () => {
         >
           Hey there, I’m Clario.
         </motion.h1>
-        
         <motion.div variants={itemVariants} style={{ marginBottom: '20px' }}>
           <p style={{
             color: '#F9F9F9',
@@ -122,7 +197,6 @@ const FlashScreen = () => {
             and bring clarity to life.
           </p>
         </motion.div>
-        
         <motion.p variants={itemVariants} style={{
           color: '#F9F9F9',
           fontFamily: 'Outfit, sans-serif',
@@ -136,7 +210,6 @@ const FlashScreen = () => {
         }}>
           Here are a few things you should know about me:
         </motion.p>
-        
         <motion.div variants={itemVariants} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '20px' }}>
           <img
             src={firstIcon}
@@ -176,7 +249,6 @@ const FlashScreen = () => {
             </p>
           </div>
         </motion.div>
-        
         <motion.div variants={itemVariants} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '20px' }}>
           <img
             src={secondIcon}
@@ -216,7 +288,6 @@ const FlashScreen = () => {
             </p>
           </div>
         </motion.div>
-        
         <motion.div variants={itemVariants} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '20px' }}>
           <img
             src={thirdIcon}
@@ -256,12 +327,11 @@ const FlashScreen = () => {
             </p>
           </div>
         </motion.div>
-        
         <motion.button
           variants={itemVariants}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={() => setShowSecondSlide(true)}
+          onClick={handleNextSlide}
           style={{
             display: 'inline-flex',
             height: '50.987px',
@@ -281,8 +351,7 @@ const FlashScreen = () => {
             border: 'none',
             cursor: 'pointer',
             marginTop: '20px',
-            marginLeft: '0px',
-            alignSelf: 'flex-start',
+            alignSelf: 'flex-end',
             marginBottom: '40px',
           }}
         >
@@ -307,42 +376,15 @@ const FlashScreen = () => {
       }}
       className="second-slide"
     >
-      <div style={{ width: '100%', maxWidth: '600px' }}>
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            marginBottom: '20px',
-          }}
-        >
-          <img
-            src={logo}
-            alt="Clario Logo"
-            style={{
-              width: '38px',
-              height: '38px',
-              flexShrink: 0,
-            }}
-          />
-          <h1
-            style={{
-              color: '#FFFFFB',
-              fontFamily: 'Outfit, sans-serif',
-              fontSize: '32px',
-              fontStyle: 'normal',
-              fontWeight: 400,
-              lineHeight: 'normal',
-              margin: 0,
-            }}
-            className="clario-heading"
-          >
-            Clario
-          </h1>
-        </div>
-        
-        <h2
-          style={{
+      <ProgressBar />
+      <div style={{ width: '100%', maxWidth: '600px', paddingTop: '50px' }}>
+        <img
+          src={logo}
+          alt="Clario Logo"
+          style={{ width: '38px', height: '38px', flexShrink: 0, marginBottom: '20px' }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <h2 style={{
             color: '#F9F9F9',
             fontFamily: 'Outfit, sans-serif',
             fontSize: '32px',
@@ -351,47 +393,42 @@ const FlashScreen = () => {
             lineHeight: 'normal',
             textAlign: 'left',
             margin: 0,
+            maxWidth: '490px',
+            marginBottom: '16px',
           }}
           className="prompt-heading"
-        >
-          Before we get started, what should I call you?
-        </h2>
-        
-        <div
-          style={{
-            width: '100%',
-            maxWidth: '490px',
-            marginTop: '16px',
-          }}
-        >
-          <input
-            type="text"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="enter your name"
-            className="email-input"
-            autoFocus
-            style={{
-              width: '100%',
-              height: '70px',
-              flexShrink: 0,
-              borderRadius: '12px',
-              border: '1px solid #F9F9F9',
-              background: 'transparent',
-              color: '#FFF',
-              fontFamily: 'Outfit, sans-serif',
-              fontSize: '20px',
-              fontStyle: 'normal',
-              fontWeight: 400,
-              lineHeight: 'normal',
-              padding: '0 16px',
-              outline: 'none',
-            }}
-          />
+          >
+            Before we get started, what should I call you?
+          </h2>
+          <div style={{ width: '100%', maxWidth: '490px' }}>
+            <input
+              type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="enter your name"
+              className="email-input"
+              autoFocus
+              style={{
+                width: '100%',
+                height: '70px',
+                flexShrink: 0,
+                borderRadius: '12px',
+                border: '1px solid #F9F9F9',
+                background: 'transparent',
+                color: '#FFF',
+                fontFamily: 'Outfit, sans-serif',
+                fontSize: '20px',
+                fontStyle: 'normal',
+                fontWeight: 400,
+                lineHeight: 'normal',
+                padding: '0 16px',
+                outline: 'none',
+              }}
+            />
+          </div>
         </div>
-        
         <button
-          onClick={handleNavigate}
+          onClick={handleNextSlide}
           style={{
             display: 'inline-flex',
             height: '60px',
@@ -411,14 +448,558 @@ const FlashScreen = () => {
             border: 'none',
             cursor: 'pointer',
             marginTop: '16px',
-            alignSelf: 'flex-start',
+            alignSelf: 'flex-end',
           }}
         >
-          let’s go
+          Continue
         </button>
       </div>
     </div>
   );
+
+  const ThirdSlide = () => (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '54px 0 102px 0',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+        background: '#0E0E0E',
+        minHeight: '100vh',
+        width: '100%',
+      }}
+      className="third-slide"
+    >
+      <ProgressBar />
+      <div style={{ width: '100%', maxWidth: '912px', paddingTop: '50px' }}>
+        <img
+          src={logo}
+          alt="Clario Logo"
+          style={{ width: '38px', height: '38px', flexShrink: 0, marginBottom: '20px' }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <h2 style={{
+            color: '#F9F9F9',
+            fontFamily: 'Outfit, sans-serif',
+            fontSize: '40px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            textAlign: 'left',
+            margin: 0,
+            maxWidth: '912px',
+            marginBottom: '16px',
+          }}>
+            Select core values that guide your decisions:
+          </h2>
+          <div style={{ width: '100%' }}>
+            {[
+              'Family and Relationships',
+              'Creativity and Innovation',
+              'Knowledge and Learning',
+              'Adventure and Risk-taking',
+              'Spirituality'
+            ].map((option) => (
+              <CheckboxOption
+                key={option}
+                label={option}
+                checked={selectedValues.includes(option)}
+                onChange={() => {
+                  setSelectedValues((prev) =>
+                    prev.includes(option)
+                      ? prev.filter((item) => item !== option)
+                      : [...prev, option]
+                  );
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={handleNextSlide}
+          style={{
+            display: 'inline-flex',
+            height: '60px',
+            padding: '16px 41px',
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+            gap: '10px',
+            flexShrink: 0,
+            borderRadius: '10px',
+            background: '#F9F9F9',
+            color: '#000',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '18px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            border: 'none',
+            cursor: 'pointer',
+            marginTop: '16px',
+            alignSelf: 'flex-end',
+          }}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+
+  const FourthSlide = () => (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '54px 0 102px 0',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+        background: '#0E0E0E',
+        minHeight: '100vh',
+        width: '100%',
+      }}
+      className="fourth-slide"
+    >
+      <ProgressBar />
+      <div style={{ width: '100%', maxWidth: '912px', paddingTop: '50px' }}>
+        <img
+          src={logo}
+          alt="Clario Logo"
+          style={{ width: '38px', height: '38px', flexShrink: 0, marginBottom: '20px' }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <h2 style={{
+            color: '#F9F9F9',
+            fontFamily: 'Outfit, sans-serif',
+            fontSize: '40px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            textAlign: 'left',
+            margin: 0,
+            maxWidth: '912px',
+            marginBottom: '16px',
+          }}>
+            Have you experienced any mental health concerns in the past or are you currently experiencing?
+          </h2>
+          <div style={{ width: '100%' }}>
+            {[
+              'Yes, I am currently suffering from mental health problems.',
+              'Yes, I have experienced mental health issues in past.',
+              'No, I have never faced mental health issues.'
+            ].map((option) => (
+              <CheckboxOption
+                key={option}
+                label={option}
+                checked={selectedMentalHealth.includes(option)}
+                onChange={() => {
+                  setSelectedMentalHealth((prev) =>
+                    prev.includes(option)
+                      ? prev.filter((item) => item !== option)
+                      : [...prev, option]
+                  );
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={handleNextSlide}
+          style={{
+            display: 'inline-flex',
+            height: '60px',
+            padding: '16px 41px',
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+            gap: '10px',
+            flexShrink: 0,
+            borderRadius: '10px',
+            background: '#F9F9F9',
+            color: '#000',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '18px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            border: 'none',
+            cursor: 'pointer',
+            marginTop: '16px',
+            alignSelf: 'flex-end',
+          }}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+
+  const FifthSlide = () => (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '54px 0 102px 0',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+        background: '#0E0E0E',
+        minHeight: '100vh',
+        width: '100%',
+      }}
+      className="fifth-slide"
+    >
+      <ProgressBar />
+      <div style={{ width: '100%', maxWidth: '912px', paddingTop: '50px' }}>
+        <img
+          src={logo}
+          alt="Clario Logo"
+          style={{ width: '38px', height: '38px', flexShrink: 0, marginBottom: '20px' }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <h2 style={{
+            color: '#F9F9F9',
+            fontFamily: 'Outfit, sans-serif',
+            fontSize: '40px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            textAlign: 'left',
+            margin: 0,
+            maxWidth: '912px',
+            marginBottom: '16px',
+          }}>
+            Are you more of an intuitive decision-maker or do you analyze everything?
+          </h2>
+          <div style={{ width: '100%' }}>
+            {[
+              'Intuitive Decision Maker',
+              'Carefully analyses various scenarios and then take decision'
+            ].map((option) => (
+              <CheckboxOption
+                key={option}
+                label={option}
+                checked={selectedDecision.includes(option)}
+                onChange={() => {
+                  setSelectedDecision((prev) =>
+                    prev.includes(option)
+                      ? prev.filter((item) => item !== option)
+                      : [...prev, option]
+                  );
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={handleNextSlide}
+          style={{
+            display: 'inline-flex',
+            height: '60px',
+            padding: '16px 41px',
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+            gap: '10px',
+            flexShrink: 0,
+            borderRadius: '10px',
+            background: '#F9F9F9',
+            color: '#000',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '18px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            border: 'none',
+            cursor: 'pointer',
+            marginTop: '16px',
+            alignSelf: 'flex-end',
+          }}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+
+  const SixthSlide = () => (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '54px 0 102px 0',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+        background: '#0E0E0E',
+        minHeight: '100vh',
+        width: '100%',
+      }}
+      className="sixth-slide"
+    >
+      <ProgressBar />
+      <div style={{ width: '100%', maxWidth: '912px', paddingTop: '50px' }}>
+        <img
+          src={logo}
+          alt="Clario Logo"
+          style={{ width: '38px', height: '38px', flexShrink: 0, marginBottom: '20px' }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <h2 style={{
+            color: '#F9F9F9',
+            fontFamily: 'Outfit, sans-serif',
+            fontSize: '40px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            textAlign: 'left',
+            margin: 0,
+            maxWidth: '912px',
+            marginBottom: '16px',
+          }}>
+            How do you like others to communicate with you?
+          </h2>
+          <div style={{ width: '100%' }}>
+            {[
+              'Analytical and detailed',
+              'Friendly',
+              'Formal'
+            ].map((option) => (
+              <CheckboxOption
+                key={option}
+                label={option}
+                checked={selectedCommunication.includes(option)}
+                onChange={() => {
+                  setSelectedCommunication((prev) =>
+                    prev.includes(option)
+                      ? prev.filter((item) => item !== option)
+                      : [...prev, option]
+                  );
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={handleNextSlide}
+          style={{
+            display: 'inline-flex',
+            height: '60px',
+            padding: '16px 41px',
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+            gap: '10px',
+            flexShrink: 0,
+            borderRadius: '10px',
+            background: '#F9F9F9',
+            color: '#000',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '18px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            border: 'none',
+            cursor: 'pointer',
+            marginTop: '16px',
+            alignSelf: 'flex-end',
+          }}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+
+  const SeventhSlide = () => (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '54px 0 102px 0',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+        background: '#0E0E0E',
+        minHeight: '100vh',
+        width: '100%',
+      }}
+      className="seventh-slide"
+    >
+      <ProgressBar />
+      <div style={{ width: '100%', maxWidth: '912px', paddingTop: '50px' }}>
+        <img
+          src={logo}
+          alt="Clario Logo"
+          style={{ width: '38px', height: '38px', flexShrink: 0, marginBottom: '20px' }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <h2 style={{
+            color: '#F9F9F9',
+            fontFamily: 'Outfit, sans-serif',
+            fontSize: '40px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            textAlign: 'left',
+            margin: 0,
+            maxWidth: '912px',
+            marginBottom: '16px',
+          }}>
+            Which role would you prefer your AI assistant to adopt when providing guidance?
+          </h2>
+          <div style={{ width: '100%' }}>
+            {[
+              'Coach - Motivational, helps me reach my potential',
+              'Friend - Supportive, Emotionally available',
+              'Analyst - Problem-solving focused, logical recommendations',
+              'Adaptive - Changes role based on the situation'
+            ].map((option) => (
+              <CheckboxOption
+                key={option}
+                label={option}
+                checked={selectedRole.includes(option)}
+                onChange={() => {
+                  setSelectedRole((prev) =>
+                    prev.includes(option)
+                      ? prev.filter((item) => item !== option)
+                      : [...prev, option]
+                  );
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={handleNextSlide}
+          style={{
+            display: 'inline-flex',
+            height: '60px',
+            padding: '16px 41px',
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+            gap: '10px',
+            flexShrink: 0,
+            borderRadius: '10px',
+            background: '#F9F9F9',
+            color: '#000',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '18px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            border: 'none',
+            cursor: 'pointer',
+            marginTop: '16px',
+            alignSelf: 'flex-end',
+          }}
+        >
+          Continue
+        </button>
+      </div>
+    </div>
+  );
+
+  const EighthSlide = () => (
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        padding: '54px 0 102px 0',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '16px',
+        background: '#0E0E0E',
+        minHeight: '100vh',
+        width: '100%',
+      }}
+      className="eighth-slide"
+    >
+      <ProgressBar />
+      <div style={{ width: '100%', maxWidth: '912px', paddingTop: '50px' }}>
+        <img
+          src={logo}
+          alt="Clario Logo"
+          style={{ width: '38px', height: '38px', flexShrink: 0, marginBottom: '20px' }}
+        />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          <h2 style={{
+            color: '#F9F9F9',
+            fontFamily: 'Outfit, sans-serif',
+            fontSize: '40px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            textAlign: 'left',
+            margin: 0,
+            maxWidth: '912px',
+            marginBottom: '16px',
+          }}>
+            What topics should I be cautious about or avoid?
+          </h2>
+          <div style={{ width: '100%' }}>
+            {[
+              'Personal relationships',
+              'Past traumas',
+              'Religious or spiritual beliefs',
+              'Political views and opinions',
+              'Physical appearance or body image',
+              'No restrictions'
+            ].map((option) => (
+              <CheckboxOption
+                key={option}
+                label={option}
+                checked={selectedTopics.includes(option)}
+                onChange={() => {
+                  setSelectedTopics((prev) =>
+                    prev.includes(option)
+                      ? prev.filter((item) => item !== option)
+                      : [...prev, option]
+                  );
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={handleNextSlide}
+          style={{
+            display: 'inline-flex',
+            height: '60px',
+            padding: '16px 41px',
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+            gap: '10px',
+            flexShrink: 0,
+            borderRadius: '10px',
+            background: '#F9F9F9',
+            color: '#000',
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: '18px',
+            fontStyle: 'normal',
+            fontWeight: 500,
+            lineHeight: 'normal',
+            border: 'none',
+            cursor: 'pointer',
+            marginTop: '16px',
+            alignSelf: 'flex-end',
+          }}
+        >
+          let's go
+        </button>
+      </div>
+    </div>
+  );
+
+  const slides = [
+    <FirstSlide key="first-slide" />,
+    <SecondSlide key="second-slide" />,
+    <ThirdSlide key="third-slide" />,
+    <FourthSlide key="fourth-slide" />,
+    <FifthSlide key="fifth-slide" />,
+    <SixthSlide key="sixth-slide" />,
+    <SeventhSlide key="seventh-slide" />,
+    <EighthSlide key="eighth-slide" />,
+  ];
 
   return (
     <>
@@ -443,7 +1024,7 @@ const FlashScreen = () => {
             min-height: 100vh;
             overflow-y: auto;
           }
-          .second-slide {
+          .second-slide, .third-slide, .fourth-slide, .fifth-slide, .sixth-slide, .seventh-slide, .eighth-slide {
             height: auto;
             min-height: 100vh;
             overflow-y: auto;
@@ -453,7 +1034,7 @@ const FlashScreen = () => {
               padding-left: 16px;
               padding-right: 16px;
             }
-            .second-slide > div {
+            .second-slide > div, .third-slide > div, .fourth-slide > div, .fifth-slide > div, .sixth-slide > div, .seventh-slide > div, .eighth-slide > div {
               padding-left: 16px;
               padding-right: 16px;
             }
@@ -472,7 +1053,7 @@ const FlashScreen = () => {
               font-style: normal !important;
               font-weight: 400 !important;
               line-height: normal !important;
-              width: 361px !important;
+              max-width: 361px !important;
             }
             .subheading {
               color: #C9C9C9 !important;
@@ -481,18 +1062,23 @@ const FlashScreen = () => {
               font-style: normal !important;
               font-weight: 400 !important;
               line-height: normal !important;
-              width: 297px !important;
-            }
-            .clario-heading {
-              font-size: 24px !important;
+              max-width: 297px !important;
             }
             .prompt-heading {
               font-size: 24px !important;
-              width: 361px !important;
+              max-width: 361px !important;
             }
             .email-input {
               width: 100% !important;
               max-width: 361px !important;
+            }
+            .third-slide h2, .fourth-slide h2, .fifth-slide h2, .sixth-slide h2, .seventh-slide h2, .eighth-slide h2 {
+              font-size: 24px !important;
+              max-width: 361px !important;
+            }
+            .third-slide span, .fourth-slide span, .fifth-slide span, .sixth-slide span, .seventh-slide span, .eighth-slide span {
+              font-size: 16px !important;
+              max-width: 335px !important;
             }
           }
         `}
@@ -509,25 +1095,16 @@ const FlashScreen = () => {
       }}>
         <AnimatePresence mode="wait">
           {!isExiting && (
-            showSecondSlide ? (
-              <div
-                key="second-slide"
-                style={{ width: '100%', height: 'auto' }}
-              >
-                <SecondSlide />
-              </div>
-            ) : (
-              <motion.div
-                key="first-slide"
-                variants={slideVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                style={{ width: '100%', height: 'auto' }}
-              >
-                <FirstSlide />
-              </motion.div>
-            )
+            <motion.div
+              key={`slide-${currentSlide}`}
+              variants={currentSlide === 0 ? containerVariants : slideVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              style={{ width: '100%', height: 'auto' }}
+            >
+              {slides[currentSlide]}
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
