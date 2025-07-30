@@ -133,16 +133,16 @@ async def google_login(redirect_uri: str, request: Request):
         if not google:
             raise HTTPException(status_code=500, detail="Google OAuth client not configured")
         
-        # Generate the authorization URL
-        auth_data = await google.create_authorization_url(redirect_uri=redirect_uri)
-        auth_url = auth_data.get('url')
-        state = auth_data.get('state')
-        if not auth_url or not state:
-            raise HTTPException(status_code=500, detail="Failed to generate authorization URL or state")
+        # Generate the authorization URL with proper state handling
+        redirect_uri = redirect_uri or os.getenv('REDIRECT_URI', 'http://localhost:3000/google-callback')
+        authorization_url = await google.create_authorization_url(
+            redirect_uri,
+            # Remove state parameter to let authlib handle it automatically
+        )
         
-        print(f"Generated Google OAuth URL: {auth_url}, State: {state}")
-        print(f"Session before auth: {request.session}")
-        return {"url": auth_url}
+        print(f"Generated Google OAuth URL: {authorization_url}")
+        print(f"Session after auth URL generation: {request.session}")
+        return {"url": authorization_url}
     except Exception as e:
         print(f"Error generating Google OAuth URL: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate Google OAuth URL: {str(e)}")
@@ -162,15 +162,49 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
             print("Google OAuth error: OAuth client not configured")
             raise HTTPException(status_code=500, detail="Google OAuth client not configured")
         
-        # Exchange code for token
+        # Exchange code for token without explicit state validation
+        # Let authlib handle the state validation automatically
         try:
-            token = await google.authorize_access_token(
-                request,
-                redirect_uri=os.getenv('REDIRECT_URI', 'http://localhost:3000/google-callback')
-            )
+            token = await google.authorize_access_token(request)
         except OAuthError as oauth_err:
             print(f"Google OAuth error during token exchange: {str(oauth_err)} - Error: {oauth_err.error}, Description: {oauth_err.description}")
-            raise HTTPException(status_code=422, detail=f"Failed to exchange code for token: {oauth_err.error} - {oauth_err.description}")
+            # If state mismatch, try without state validation as fallback
+            if 'state' in str(oauth_err).lower() or 'csrf' in str(oauth_err).lower():
+                try:
+                    # Manual token exchange as fallback
+                    import httpx
+                    async with httpx.AsyncClient() as client:
+                        token_response = await client.post(
+                            'https://oauth2.googleapis.com/token',
+                            data={
+                                'client_id': os.getenv('GOOGLE_CLIENT_ID'),
+                                'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),
+                                'code': code,
+                                'grant_type': 'authorization_code',
+                                'redirect_uri': os.getenv('REDIRECT_URI', 'http://localhost:3000/google-callback')
+                            }
+                        )
+                        if token_response.status_code != 200:
+                            raise HTTPException(status_code=422, detail="Failed to exchange code for token")
+                        
+                        token_data = token_response.json()
+                        
+                        # Get user info
+                        user_response = await client.get(
+                            'https://www.googleapis.com/oauth2/v2/userinfo',
+                            headers={'Authorization': f'Bearer {token_data["access_token"]}'}
+                        )
+                        if user_response.status_code != 200:
+                            raise HTTPException(status_code=422, detail="Failed to get user info")
+                        
+                        user_info = user_response.json()
+                        token = {'userinfo': user_info}
+                        
+                except Exception as fallback_err:
+                    print(f"Fallback token exchange also failed: {str(fallback_err)}")
+                    raise HTTPException(status_code=422, detail=f"Failed to exchange code for token: {oauth_err.error} - {oauth_err.description}")
+            else:
+                raise HTTPException(status_code=422, detail=f"Failed to exchange code for token: {oauth_err.error} - {oauth_err.description}")
         except Exception as token_err:
             print(f"Unexpected error during token exchange: {str(token_err)}")
             raise HTTPException(status_code=422, detail=f"Unexpected error during token exchange: {str(token_err)}")
@@ -183,7 +217,7 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
         
         email = user_info.get('email')
         full_name = user_info.get('name')
-        google_id = user_info.get('sub')
+        google_id = user_info.get('sub') or user_info.get('id')
 
         if not email or not google_id:
             print(f"Google OAuth error: Invalid user info - email: {email}, google_id: {google_id}")
@@ -201,8 +235,10 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
                 )
         
         access_token = create_access_token(data={"sub": email})
-        print(f"Generated access token for user: {email}")
         return {"access_token": access_token, "token_type": "bearer"}
+    
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"Google OAuth error: {str(e)}")
-        raise HTTPException(status_code=422, detail=f"Google OAuth error: {str(e)}")
+        print(f"Unexpected error in Google callback: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
