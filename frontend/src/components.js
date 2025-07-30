@@ -493,7 +493,7 @@ export const HeroSection = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '8px'
+            gap: '15px'
           }}>
             <img
               src={logo}
