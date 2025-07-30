@@ -48,7 +48,7 @@ const FlashScreen = () => {
   const handleNavigate = () => {
     setIsExiting(true);
     setTimeout(() => {
-      navigate('/dashboard');
+      navigate('/dashboard', { state: { userName: email } });
     }, 500);
   };
 
@@ -61,7 +61,7 @@ const FlashScreen = () => {
   };
 
   const ProgressBar = () => {
-    const totalSlides = 7; // Starting from slide 2, so 7 slides (2 through 8)
+    const totalSlides = 7;
     return (
       <div style={{ 
         display: 'flex', 

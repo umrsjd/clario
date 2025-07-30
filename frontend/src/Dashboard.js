@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import Panel1SVG from './assets/panel1.svg'; // First icon (toggle)
-import Panel2SVG from './assets/panel2.svg'; // Second icon (New chat)
-import Panel3SVG from './assets/panel3.svg'; // Third icon (Chat history)
+import { useLocation } from 'react-router-dom';
+import Panel1SVG from './assets/panel1.svg';
+import Panel2SVG from './assets/panel2.svg';
+import Panel3SVG from './assets/panel3.svg';
 import ChatArrowSVG from './assets/chatarrow.svg';
-import MenuSVG from './assets/menu.svg'; // Menu icon
-import CrossSVG from './assets/cross.svg'; // Close icon
-import ArrowBackSVG from './assets/arrowback.svg'; // Back arrow for mobile chat history
+import MenuSVG from './assets/menu.svg';
+import CrossSVG from './assets/cross.svg';
+import ArrowBackSVG from './assets/arrowback.svg';
 
 const Dashboard = () => {
+  const location = useLocation();
+  const userName = location.state?.userName || 'User';
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [messages, setMessages] = useState([]);
@@ -81,7 +84,6 @@ const Dashboard = () => {
         padding: 0,
         overflow: 'hidden'
       }}>
-        {/* Sidebar (Desktop) or Menu Icon (Mobile) */}
         {!isMobile ? (
           <div style={{
             width: isSidebarExpanded ? '250px' : '60px',
@@ -564,7 +566,6 @@ const Dashboard = () => {
           </>
         )}
 
-        {/* Main Content or Chat History */}
         {showChatHistory ? (
           <div style={{
             marginLeft: isMobile ? 0 : (isSidebarExpanded ? '250px' : '60px'),
@@ -819,7 +820,6 @@ const Dashboard = () => {
             opacity: showChatHistory ? 0 : 1,
             willChange: 'margin-left, opacity'
           }}>
-            {/* Welcome Text (Mobile Only, Centered) */}
             {isMobile && showWelcomeText && (
               <div style={{
                 position: 'absolute',
@@ -840,12 +840,10 @@ const Dashboard = () => {
                   lineHeight: 'normal',
                   margin: 0
                 }}>
-                  What’s on your mind, Poorv?
+                  What’s on your mind, {userName}?
                 </h1>
               </div>
             )}
-
-            {/* Chat Container */}
             <div style={{
               flex: 1,
               width: '100%',
@@ -880,8 +878,6 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
-
-            {/* Input Container (Welcome Text + Input Bar for Desktop) */}
             <div style={{
               width: '100%',
               maxWidth: isMobile ? '303px' : '881px',
@@ -905,7 +901,7 @@ const Dashboard = () => {
                   textAlign: 'center',
                   transition: 'opacity 0.4s ease'
                 }}>
-                  What’s on your mind, Poorv?
+                  What’s on your mind, {userName}?
                 </h1>
               )}
               <div style={{
@@ -932,42 +928,48 @@ const Dashboard = () => {
                     flex: 1,
                     background: 'transparent',
                     border: 'none',
-                    color: '#999',
+                    color: '#F9F9F9',
                     fontFamily: 'Outfit, sans-serif',
-                    fontSize: isMobile ? '18px' : '18px',
+                    fontSize: isMobile ? '14px' : '18px',
                     fontStyle: 'normal',
                     fontWeight: 400,
-                    lineHeight: '30px',
-                    outline: 'none'
+                    lineHeight: 'normal',
+                    outline: 'none',
+                    padding: isMobile ? '0 10px' : '0 20px',
+                    height: '100%',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && inputMessage.trim()) {
+                      handleSendMessage();
+                    }
+                  }}
                 />
                 <button
                   onClick={handleSendMessage}
+                  disabled={!inputMessage.trim()}
                   style={{
-                    display: 'flex',
-                    width: '34px',
-                    height: '34px',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    flexShrink: 0,
-                    borderRadius: '0',
                     background: 'none',
                     border: 'none',
-                    cursor: 'pointer',
+                    cursor: inputMessage.trim() ? 'pointer' : 'not-allowed',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0',
+                    transition: 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    opacity: inputMessage.trim() ? 1 : 0.5,
                     position: 'absolute',
-                    right: isMobile ? '28px' : '20px',
-                    top: isMobile ? '9px' : '50%',
-                    transform: isMobile ? 'none' : 'translateY(-50%)',
-                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+                    right: isMobile ? '10px' : '20px',
+                    top: '50%',
+                    transform: 'translateY(-50%)'
                   }}
                 >
                   <img
                     src={ChatArrowSVG}
-                    alt="Send Icon"
+                    alt="Send Message"
                     style={{
-                      width: '34px',
-                      height: '34px',
+                      width: isMobile ? '24px' : '30px',
+                      height: isMobile ? '24px' : '30px',
                       flexShrink: 0,
                       transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
                     }}
