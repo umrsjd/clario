@@ -1,4 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -44,9 +45,9 @@ app = FastAPI(title="Calmi API", version="1.0.0")
 app.add_middleware(
     SessionMiddleware,
     secret_key=os.getenv('JWT_SECRET_KEY', 'f487fe27afc6ab766f95d455b5a1aaff2eec3633dc566f1d6d47d87a3ef655ac'),
-    max_age=3600,  # Session expires after 1 hour
-    same_site='lax',  # Allow cookies in cross-site requests
-    https_only=False  # Set to True in production with HTTPS
+    max_age=3600,
+    same_site='lax',
+    https_only=False
 )
 
 # Create a router with the /api prefix
@@ -70,29 +71,30 @@ class OTPVerifyRequest(BaseModel):
 
 # OTP Generation and Sending
 async def generate_and_send_otp(email: str):
-    # Generate 6-digit OTP
     import random
     code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
-    expires_at = datetime.utcnow() + timedelta(minutes=10)  # OTP valid for 10 minutes
-
-    # Store OTP in Neon PostgreSQL
-    pool = await get_postgres_pool()
-    async with pool.acquire() as conn:
-        # Delete any existing OTP for this email
-        await conn.execute(
-            "DELETE FROM otp_codes WHERE email = $1",
-            email
-        )
-        # Insert new OTP
-        await conn.execute(
-            "INSERT INTO otp_codes (email, code, expires_at) VALUES ($1, $2, $3)",
-            email, code, expires_at
-        )
-
+    expires_at = datetime.utcnow() + timedelta(minutes=10)
+    
+    logger.info(f"Generated OTP {code} for email: {email}")
+    
+    # Store OTP in Neon
+    try:
+        pool = await get_postgres_pool()
+        async with pool.acquire() as conn:
+            await conn.execute("DELETE FROM otp_codes WHERE email = $1", email)
+            await conn.execute(
+                "INSERT INTO otp_codes (email, code, expires_at) VALUES ($1, $2, $3)",
+                email, code, expires_at
+            )
+            logger.info(f"Stored OTP for email: {email} in Neon")
+    except Exception as e:
+        logger.error(f"Failed to store OTP in Neon: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to store OTP: {str(e)}")
+    
     # Send OTP via Resend
     try:
         email_params = {
-            "from": "no-reply@yourdomain.com",  # Replace with your verified Resend domain
+            "from": "onboarding@resend.dev",
             "to": [email],
             "subject": "Your Clario Verification Code",
             "html": f"""
@@ -102,10 +104,16 @@ async def generate_and_send_otp(email: str):
             <p>This code expires in 10 minutes.</p>
             """
         }
-        resend.Emails.send(email_params)
+        response = resend.Emails.send(email_params)
+        logger.info(f"Resend API response: {response}")
+    except resend.exceptions.ResendError as e:
+        error_detail = e.response.json() if e.response else {"message": str(e)}
+        logger.error(f"Failed to send email via Resend: {error_detail}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {error_detail.get('message', 'Unknown Resend error')}")
     except Exception as e:
+        logger.error(f"Unexpected error in Resend: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
-
+    
     return {"message": "OTP sent successfully"}
 
 # Routes
@@ -131,7 +139,18 @@ async def get_status_checks():
 
 @api_router.post("/auth/send-otp")
 async def send_otp(request: EmailRequest):
-    return await generate_and_send_otp(request.email)
+    try:
+        logger.info(f"Received OTP request for email: {request.email}")
+        result = await generate_and_send_otp(request.email)
+        logger.info(f"OTP generated and sent for email: {request.email}")
+        return result
+    except resend.exceptions.ResendError as e:
+        error_detail = e.response.json() if e.response else {"message": str(e)}
+        logger.error(f"Resend error in send_otp: {error_detail}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {error_detail.get('message', 'Unknown Resend error')}")
+    except Exception as e:
+        logger.error(f"Error in send_otp: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @api_router.post("/auth/verify-otp")
 async def verify_otp(request: OTPVerifyRequest):
@@ -164,6 +183,26 @@ async def verify_otp(request: OTPVerifyRequest):
         access_token = create_access_token(data={"sub": request.email})
         return {"access_token": access_token, "token_type": "bearer"}
 
+# Custom exception handler for CORS
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    headers = {"Access-Control-Allow-Origin": "http://localhost:3000", "Access-Control-Allow-Credentials": "true"}
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=headers
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request: Request, exc: Exception):
+    headers = {"Access-Control-Allow-Origin": "http://localhost:3000", "Access-Control-Allow-Credentials": "true"}
+    logger.error(f"Unexpected error: {str(exc)}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+        headers=headers
+    )
+
 # Include auth and chat routers
 api_router.include_router(auth_router)
 api_router.include_router(chat_router)
@@ -174,10 +213,11 @@ app.include_router(api_router)
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Be specific for security
+    allow_origins=["http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Access-Control-Allow-Origin"]
 )
 
 # Configure logging

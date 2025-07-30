@@ -823,7 +823,7 @@ const Dashboard = () => {
             {isMobile && showWelcomeText && (
               <div style={{
                 position: 'absolute',
-                top: '50%',
+                top: '40%',
                 left: '50%',
                 transform: 'translate(-50%, -50%)',
                 width: '100%',
@@ -853,7 +853,7 @@ const Dashboard = () => {
               gap: '10px',
               margin: '0 auto',
               overflowY: 'auto',
-              paddingBottom: isMobile ? '140px' : '140px'
+              paddingBottom: isMobile ? (messages.length > 0 ? '140px' : '100px') : '140px'
             }}>
               {messages.map((message) => (
                 <div
@@ -882,8 +882,11 @@ const Dashboard = () => {
               width: '100%',
               maxWidth: isMobile ? '303px' : '881px',
               margin: '0 auto',
-              position: isMobile ? 'sticky' : 'static',
-              bottom: isMobile ? '40px' : 'auto',
+              position: isMobile && showWelcomeText && messages.length === 0 ? 'absolute' : isMobile ? 'sticky' : 'static',
+              top: isMobile && showWelcomeText && messages.length === 0 ? '50%' : 'auto',
+              left: isMobile && showWelcomeText && messages.length === 0 ? '50%' : 'auto',
+              bottom: isMobile && !(showWelcomeText && messages.length === 0) ? '40px' : 'auto',
+              transform: isMobile && showWelcomeText && messages.length === 0 ? 'translate(-50%, -50%)' : 'none',
               background: '#0E0E0E',
               zIndex: 999,
               padding: isMobile ? '15px 0' : '0',

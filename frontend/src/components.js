@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext, createContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify'; // Uncomment for react-toastify
-import 'react-toastify/dist/ReactToastify.css'; // Uncomment for react-toastify
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import FourthSVG from './assets/fourth.svg';
 import FifthSVG from './assets/fifth.svg';
 import SixthSVG from './assets/six.svg';
@@ -10,6 +10,7 @@ import logo from './assets/logoo.svg';
 import GoogleSVG from './assets/google.svg';
 import AppleSVG from './assets/apple.svg';
 import ArrowSVG from './assets/Arrow.svg';
+import SeventhSVG from './assets/icon.svg';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
@@ -167,8 +168,7 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
       console.error('Google OAuth URL error:', err);
       const errorMessage = err.response?.data?.detail || 'Failed to initiate Google authentication';
       setError(errorMessage);
-      alert(errorMessage); // Replace with toast.error(errorMessage) for react-toastify
-      // toast.error(errorMessage); // Uncomment for react-toastify
+      toast.error(errorMessage);
     } finally {
       setIsLoadingGoogle(false);
     }
@@ -176,7 +176,7 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      {/* <ToastContainer /> */} {/* Uncomment for react-toastify */}
+      <ToastContainer />
       <div style={{
         background: '#fff',
         padding: '2rem',
@@ -394,7 +394,9 @@ export const HeroSection = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+  const [isLoadingOtp, setIsLoadingOtp] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
+  const [error, setError] = useState('');
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const meetClarioRef = useRef(null);
@@ -403,6 +405,7 @@ export const HeroSection = () => {
   const handleGoogleLogin = async () => {
     if (isLoadingGoogle) return;
     setIsLoadingGoogle(true);
+    setError('');
     try {
       console.log('Initiating Google OAuth login from HeroSection');
       const response = await axios.get(`${API}/auth/google/url`, {
@@ -419,8 +422,8 @@ export const HeroSection = () => {
     } catch (err) {
       console.error('Google OAuth URL error:', err);
       const errorMessage = err.response?.data?.detail || 'Unable to connect to Google. Please try again later.';
-      alert(errorMessage); // Replace with toast.error(errorMessage) for react-toastify
-      // toast.error(errorMessage); // Uncomment for react-toastify
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoadingGoogle(false);
     }
@@ -430,15 +433,29 @@ export const HeroSection = () => {
     navigate('/welcome'); // Navigate to FlashScreen (Apple login not implemented)
   };
 
-  const handleEmailSubmit = (e) => {
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
-    if (email.trim()) {
-      setShowOtp(true); // Switch to OTP view
-      setEmail(email.trim());
-    } else {
-      alert('Please enter a valid email address');
+    if (!email.trim()) {
+        setError('Please enter a valid email address');
+        toast.error('Please enter a valid email address');
+        return;
     }
-  };
+    setIsLoadingOtp(true);
+    setError('');
+    try {
+        const response = await axios.post(`${API}/auth/send-otp`, { email: email.trim() });
+        console.log('Send OTP response:', response.data);
+        setShowOtp(true);
+        toast.success('Verification code sent to your email');
+    } catch (err) {
+        console.error('Send OTP error:', err.response?.data, err.message, err);
+        const errorMessage = err.response?.data?.detail || err.message || 'Failed to send verification code';
+        setError(errorMessage);
+        toast.error(errorMessage);
+    } finally {
+        setIsLoadingOtp(false);
+    }
+};
 
   const handleOtpChange = (index, value) => {
     if (/^[0-9]?$/.test(value)) {
@@ -457,9 +474,29 @@ export const HeroSection = () => {
     }
   };
 
-  const handleOtpSubmit = (e) => {
+  const handleOtpSubmit = async (e) => {
     e.preventDefault();
-    navigate('/welcome'); // Navigate to FlashScreen
+    const code = otp.join('');
+    if (code.length !== 6) {
+      setError('Please enter a 6-digit code');
+      return;
+    }
+    setIsLoadingOtp(true);
+    setError('');
+    try {
+      const response = await axios.post(`${API}/auth/verify-otp`, {
+        email: email.trim(),
+        code
+      });
+      login(response.data.access_token);
+      navigate('/welcome');
+    } catch (err) {
+      const errorMessage = err.response?.data?.detail || 'Invalid or expired verification code';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsLoadingOtp(false);
+    }
   };
 
   const toggleDropdown = (index) => {
@@ -472,6 +509,7 @@ export const HeroSection = () => {
 
   return (
     <>
+      <ToastContainer />
       <section style={{
         padding: '0 1rem 2rem',
         background: '#fff'
@@ -547,6 +585,19 @@ export const HeroSection = () => {
             gap: '0.75rem',
             padding: '1.5rem'
           }}>
+            {error && (
+              <div style={{
+                marginBottom: '1rem',
+                padding: '0.75rem',
+                backgroundColor: '#FEE2E2',
+                border: '1px solid #F87171',
+                color: '#B91C1C',
+                borderRadius: '0.25rem',
+                width: 'min(95%, 500px)'
+              }}>
+                {error}
+              </div>
+            )}
             {!showOtp ? (
               <>
                 <div style={{
@@ -559,7 +610,7 @@ export const HeroSection = () => {
                 }}>
                   <button
                     onClick={handleGoogleLogin}
-                    disabled={isLoadingGoogle}
+                    disabled={isLoadingGoogle || isLoadingOtp}
                     style={{
                       display: 'flex',
                       width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
@@ -571,7 +622,7 @@ export const HeroSection = () => {
                       border: '1px solid #999',
                       background: '#fff',
                       whiteSpace: 'nowrap',
-                      opacity: isLoadingGoogle ? '0.5' : '1'
+                      opacity: isLoadingGoogle || isLoadingOtp ? '0.5' : '1'
                     }}
                   >
                     <img
@@ -596,6 +647,7 @@ export const HeroSection = () => {
 
                   <button
                     onClick={handleAppleLogin}
+                    disabled={isLoadingOtp}
                     style={{
                       display: 'flex',
                       width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
@@ -605,7 +657,8 @@ export const HeroSection = () => {
                       gap: '0.5rem',
                       borderRadius: '8px',
                       border: '1px solid rgba(153, 153, 153, 0.88)',
-                      background: '#fff'
+                      background: '#fff',
+                      opacity: isLoadingOtp ? '0.5' : '1'
                     }}
                   >
                     <img
@@ -664,23 +717,28 @@ export const HeroSection = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="enter your email"
+                  disabled={isLoadingOtp}
                   style={{
                     width: 'min(95%, 500px)',
                     height: '40px',
                     padding: '0.5rem 1.5rem',
                     borderRadius: '8px',
-                    border: '1px solid #999'
+                    border: '1px solid #999',
+                    outline: 'none',
+                    opacity: isLoadingOtp ? '0.5' : '1'
                   }}
                 />
 
                 <button
                   onClick={handleEmailSubmit}
+                  disabled={isLoadingOtp}
                   style={{
                     width: 'min(95%, 500px)',
                     height: '40px',
                     padding: '0.5rem 1.5rem',
                     borderRadius: '8px',
-                    background: '#1B263B'
+                    background: '#1B263B',
+                    opacity: isLoadingOtp ? '0.5' : '1'
                   }}
                 >
                   <span style={{
@@ -691,7 +749,7 @@ export const HeroSection = () => {
                     fontWeight: 400,
                     lineHeight: 'normal'
                   }}>
-                    Send code
+                    {isLoadingOtp ? 'Sending...' : 'Send code'}
                   </span>
                 </button>
               </>
@@ -735,6 +793,7 @@ export const HeroSection = () => {
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
                       maxLength="1"
                       ref={(el) => (otpInputRefs.current[index] = el)}
+                      disabled={isLoadingOtp}
                       style={{
                         width: 'clamp(36px, 10vw, 48px)',
                         height: 'clamp(36px, 10vw, 48px)',
@@ -744,13 +803,15 @@ export const HeroSection = () => {
                         textAlign: 'center',
                         fontSize: 'clamp(16px, 4vw, 20px)',
                         fontFamily: 'Outfit',
-                        outline: 'none'
+                        outline: 'none',
+                        opacity: isLoadingOtp ? '0.5' : '1'
                       }}
                     />
                   ))}
                 </div>
                 <button
                   onClick={handleOtpSubmit}
+                  disabled={isLoadingOtp}
                   style={{
                     display: 'flex',
                     width: 'min(95%, 353px)',
@@ -762,7 +823,8 @@ export const HeroSection = () => {
                     gap: '10px',
                     flexShrink: 0,
                     borderRadius: '10px',
-                    background: '#1B263B'
+                    background: '#1B263B',
+                    opacity: isLoadingOtp ? '0.5' : '1'
                   }}
                 >
                   <span style={{
@@ -773,7 +835,7 @@ export const HeroSection = () => {
                     fontWeight: 400,
                     lineHeight: 'normal'
                   }}>
-                    Submit
+                    {isLoadingOtp ? 'Verifying...' : 'Submit'}
                   </span>
                 </button>
               </>
@@ -911,7 +973,7 @@ export const HeroSection = () => {
               <>
                 <p style={{
                   width: 'min(95%, 999px)',
-                  maxHeight: '72px',
+                  maxHeight: '110px',
                   color: '#1B263B',
                   fontFamily: 'Poppins',
                   fontSize: 'clamp(14px, 2.5vw, 20px)',
@@ -988,7 +1050,7 @@ export const HeroSection = () => {
               <>
                 <p style={{
                   width: 'min(95%, 999px)',
-                  maxHeight: '72px',
+                  maxHeight: '92px',
                   color: '#1B263B',
                   fontFamily: 'Poppins',
                   fontSize: 'clamp(14px, 2.5vw, 20px)',
@@ -1000,7 +1062,7 @@ export const HeroSection = () => {
                   padding: '0 1.5rem',
                   transition: 'max-height 0.3s ease-in-out'
                 }}>
-                  Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                  As your goals shift and ideas evolve, Clario adapts in sync. It’s not static, it learns and matures just like you do.
                 </p>
                 <div style={{
                   width: 'min(95%, 1032.06px)',
@@ -1021,7 +1083,7 @@ export const HeroSection = () => {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <img
-                  src={SixthSVG}
+                  src={SeventhSVG}
                   alt="Feels Like a Companion Icon"
                   style={{
                     width: 'clamp(20px, 5vw, 30px)',
@@ -1057,7 +1119,7 @@ export const HeroSection = () => {
             {openDropdown === 3 && (
               <p style={{
                 width: 'min(95%, 999px)',
-                maxHeight: '72px',
+                maxHeight: '92px',
                 color: '#1B263B',
                 fontFamily: 'Poppins',
                 fontSize: 'clamp(14px, 2.5vw, 20px)',
@@ -1069,7 +1131,7 @@ export const HeroSection = () => {
                 padding: '0 1.5rem',
                 transition: 'max-height 0.3s ease-in-out'
               }}>
-                Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                Clario listens, reflects, and connects. It’s a steady presence, always there when you need clarity or care.
               </p>
             )}
           </div>
@@ -1138,7 +1200,7 @@ export const HeroSection = () => {
                 <>
                   <p style={{
                     width: 'min(95%, 999px)',
-                    maxHeight: '72px',
+                    maxHeight: '110px',
                     color: '#1B263B',
                     fontFamily: 'Poppins',
                     fontSize: 'clamp(14px, 2.5vw, 20px)',
@@ -1150,7 +1212,7 @@ export const HeroSection = () => {
                     padding: '0 1.5rem',
                     transition: 'max-height 0.3s ease-in-out'
                   }}>
-                    Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                    Clario is your AI powered emotional companion, it remembers, learns, and grows with you. It helps you reflect, feel heard, and move forward with gentle clarity.
                   </p>
                   <div style={{
                     width: 'min(95%, 1032.02px)',
@@ -1202,7 +1264,7 @@ export const HeroSection = () => {
                 <>
                   <p style={{
                     width: 'min(95%, 999px)',
-                    maxHeight: '72px',
+                    maxHeight: '110px',
                     color: '#1B263B',
                     fontFamily: 'Poppins',
                     fontSize: 'clamp(14px, 2.5vw, 20px)',
@@ -1214,7 +1276,7 @@ export const HeroSection = () => {
                     padding: '0 1.5rem',
                     transition: 'max-height 0.3s ease-in-out'
                   }}>
-                    Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                    Whether you’re thinking through life, venting emotions, or needing perspective, Clario listens. It’s built to support your mental and emotional growth, anytime you need.
                   </p>
                   <div style={{
                     width: 'min(95%, 1032.02px)',
@@ -1278,9 +1340,8 @@ export const HeroSection = () => {
                   padding: '0 1.5rem',
                   transition: 'max-height 0.3s ease-in-out'
                 }}>
-                  Clario stores your thoughts, patterns, and preferences not just facts. It understands your journey and never forgets what matters to you.
+                  Clario is completely free right now. No hidden fees. Just real conversations, whenever you need them.
                 </p>
-                
               )}
             </div>
           </div>
@@ -1376,7 +1437,7 @@ export const ChatModal = ({ isOpen, onClose }) => {
         setLoading(false);
       }
     } else if (!user) {
-      alert('Please log in to chat with clario');
+      toast.error('Please log in to chat with clario');
     }
   };
 
@@ -1543,7 +1604,7 @@ export const GoogleCallback = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [error, setError] = useState(null);
-  const requestSentRef = useRef(false); // Use useRef instead of state
+  const requestSentRef = useRef(false);
 
   useEffect(() => {
     const handleCallback = async () => {
@@ -1573,8 +1634,7 @@ export const GoogleCallback = () => {
         const errorMessage = error.response?.data?.detail || error.message;
         console.error('Google OAuth callback error:', errorMessage, error);
         setError(errorMessage);
-        alert(`Authentication failed: ${errorMessage}`); // Replace with toast.error(errorMessage) for react-toastify
-        // toast.error(`Authentication failed: ${errorMessage}`); // Uncomment for react-toastify
+        toast.error(`Authentication failed: ${errorMessage}`);
         navigate('/');
       }
     };
@@ -1593,7 +1653,7 @@ export const GoogleCallback = () => {
       alignItems: 'center',
       justifyContent: 'center'
     }}>
-      {/* <ToastContainer /> */} {/* Uncomment for react-toastify */}
+      <ToastContainer />
       <div style={{ textAlign: 'center' }}>
         {error ? (
           <p style={{ color: 'red' }}>Error: {error}</p>
