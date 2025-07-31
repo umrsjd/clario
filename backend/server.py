@@ -94,7 +94,7 @@ async def generate_and_send_otp(email: str):
     # Send OTP via Resend
     try:
         email_params = {
-            "from": "onboarding@resend.dev",
+            "from": os.getenv('RESEND_FROM_EMAIL', 'onboarding@clario.co.in'),
             "to": [email],
             "subject": "Your Clario Verification Code",
             "html": f"""
@@ -107,9 +107,9 @@ async def generate_and_send_otp(email: str):
         response = resend.Emails.send(email_params)
         logger.info(f"Resend API response: {response}")
     except resend.exceptions.ResendError as e:
-        error_detail = e.response.json() if e.response else {"message": str(e)}
-        logger.error(f"Failed to send email via Resend: {error_detail}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to send email: {error_detail.get('message', 'Unknown Resend error')}")
+        error_message = getattr(e, 'message', str(e))  # Safely get error message
+        logger.error(f"Failed to send email via Resend: {error_message}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {error_message}")
     except Exception as e:
         logger.error(f"Unexpected error in Resend: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
@@ -145,9 +145,9 @@ async def send_otp(request: EmailRequest):
         logger.info(f"OTP generated and sent for email: {request.email}")
         return result
     except resend.exceptions.ResendError as e:
-        error_detail = e.response.json() if e.response else {"message": str(e)}
-        logger.error(f"Resend error in send_otp: {error_detail}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Failed to send email: {error_detail.get('message', 'Unknown Resend error')}")
+        error_message = getattr(e, 'message', str(e))
+        logger.error(f"Resend error in send_otp: {error_message}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to send email: {error_message}")
     except Exception as e:
         logger.error(f"Error in send_otp: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")

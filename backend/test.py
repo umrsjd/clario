@@ -8,13 +8,13 @@ resend.api_key = os.getenv("RESEND_API_KEY")
 try:
     response = resend.Emails.send({
         "from": "onboarding@resend.dev",
-        "to": ["umrsjd123@gmail.com"],  # Test with non-working email
+        "to": ["umrsjd123@gmail.com"],
         "subject": "Test Email",
         "html": "<p>Test email from Resend</p>"
     })
     print("Resend API response:", response)
 except resend.exceptions.ResendError as e:
-    error_detail = e.response.json() if e.response else {"message": str(e)}
-    print("Resend error details:", error_detail)
+    error_message = getattr(e, 'message', str(e))
+    print("Resend error details:", error_message)
 except Exception as e:
     print("General error:", str(e))

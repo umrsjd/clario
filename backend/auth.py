@@ -135,14 +135,15 @@ async def google_login(redirect_uri: str, request: Request):
         
         # Generate the authorization URL with proper state handling
         redirect_uri = redirect_uri or os.getenv('REDIRECT_URI', 'http://localhost:3000/google-callback')
-        authorization_url = await google.create_authorization_url(
+        authorization_url, state = await google.create_authorization_url(
             redirect_uri,
             # Remove state parameter to let authlib handle it automatically
         )
         
         print(f"Generated Google OAuth URL: {authorization_url}")
+        print(f"Generated state: {state}")
         print(f"Session after auth URL generation: {request.session}")
-        return {"url": authorization_url}
+        return {"url": authorization_url, "state": state}
     except Exception as e:
         print(f"Error generating Google OAuth URL: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to generate Google OAuth URL: {str(e)}")
