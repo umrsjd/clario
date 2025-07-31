@@ -3,7 +3,6 @@ from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import asyncpg
 import os
 import logging
@@ -19,11 +18,6 @@ import resend
 # Load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
-
-# MongoDB connection
-mongo_url = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.getenv('DB_NAME', 'test_database')]
 
 # Neon PostgreSQL connection
 neon_url = os.getenv('NEON_DATABASE_URL')
@@ -54,14 +48,6 @@ app.add_middleware(
 api_router = APIRouter(prefix="/api")
 
 # Define Models
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
 class EmailRequest(BaseModel):
     email: EmailStr
 
@@ -104,10 +90,11 @@ async def generate_and_send_otp(email: str):
             <p>This code expires in 10 minutes.</p>
             """
         }
+        logger.info(f"Sending email with params: {email_params}")
         response = resend.Emails.send(email_params)
         logger.info(f"Resend API response: {response}")
     except resend.exceptions.ResendError as e:
-        error_message = getattr(e, 'message', str(e))  # Safely get error message
+        error_message = getattr(e, 'message', str(e))
         logger.error(f"Failed to send email via Resend: {error_message}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to send email: {error_message}")
     except Exception as e:
@@ -124,18 +111,6 @@ async def root():
 @api_router.get("/health")
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.utcnow()}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
 
 @api_router.post("/auth/send-otp")
 async def send_otp(request: EmailRequest):
@@ -173,11 +148,14 @@ async def verify_otp(request: OTPVerifyRequest):
         # OTP is valid, delete it
         await conn.execute("DELETE FROM otp_codes WHERE email = $1", request.email)
         
-        # Create or update user in MongoDB
-        user = await db.users.find_one({"email": request.email})
+        # Create or update user in PostgreSQL
+        user = await conn.fetchrow("SELECT email, full_name FROM users WHERE email = $1", request.email)
         if not user:
-            user_data = {"email": request.email, "full_name": request.email.split('@')[0]}
-            await db.users.insert_one(user_data)
+            full_name = request.email.split('@')[0]
+            await conn.execute(
+                "INSERT INTO users (email, full_name) VALUES ($1, $2)",
+                request.email, full_name
+            )
         
         # Generate JWT token
         access_token = create_access_token(data={"sub": request.email})
@@ -231,11 +209,6 @@ logger = logging.getLogger(__name__)
 async def startup_event():
     logger.info("Calmi API starting up...")
     try:
-        await db.users.create_index("email", unique=True)
-        await db.conversations.create_index([("user_id", 1), ("updated_at", -1)])
-        await db.messages.create_index([("conversation_id", 1), ("timestamp", 1)])
-        logger.info("MongoDB indexes created successfully")
-        
         # Verify Neon connection
         pool = await get_postgres_pool()
         async with pool.acquire() as conn:
@@ -248,7 +221,6 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     logger.info("Shutting down Calmi API...")
-    client.close()
     pool = await get_postgres_pool()
     await pool.close()
 

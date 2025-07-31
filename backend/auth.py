@@ -1,6 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from motor.motor_asyncio import AsyncIOMotorClient
 from passlib.context import CryptContext
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
@@ -10,6 +9,7 @@ from starlette.config import Config
 from starlette.requests import Request
 import os
 from dotenv import load_dotenv
+import asyncpg
 
 router = APIRouter()
 
@@ -41,11 +41,12 @@ except Exception as e:
     print(f"Failed to register Google OAuth client: {str(e)}")
     raise Exception(f"Google OAuth client registration failed: {str(e)}")
 
-# MongoDB setup
-MONGO_URL = os.getenv('MONGO_URL', 'mongodb://localhost:27017')
-DB_NAME = os.getenv('DB_NAME', 'test_database')
-client = AsyncIOMotorClient(MONGO_URL)
-db = client[DB_NAME]
+# Neon PostgreSQL connection
+async def get_postgres_pool():
+    neon_url = os.getenv('NEON_DATABASE_URL')
+    if not neon_url:
+        raise ValueError("NEON_DATABASE_URL not set in environment variables")
+    return await asyncpg.create_pool(neon_url)
 
 # JWT setup
 JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'your-secret-key')
@@ -70,14 +71,28 @@ class GoogleCallbackRequest(BaseModel):
     code: str
 
 async def get_user_by_email(email: str):
-    return await db.users.find_one({"email": email})
+    pool = await get_postgres_pool()
+    async with pool.acquire() as conn:
+        user = await conn.fetchrow(
+            "SELECT email, full_name, google_id, password FROM users WHERE email = $1",
+            email
+        )
+        return dict(user) if user else None
 
 async def create_user(user: User):
-    user_dict = user.dict(exclude_unset=True)
-    if user.password:
-        user_dict['password'] = pwd_context.hash(user.password)
-    await db.users.insert_one(user_dict)
-    return user_dict
+    pool = await get_postgres_pool()
+    async with pool.acquire() as conn:
+        user_dict = user.dict(exclude_unset=True)
+        if user.password:
+            user_dict['password'] = pwd_context.hash(user.password)
+        await conn.execute(
+            "INSERT INTO users (email, full_name, google_id, password) VALUES ($1, $2, $3, $4)",
+            user_dict.get('email'),
+            user_dict.get('full_name'),
+            user_dict.get('google_id'),
+            user_dict.get('password')
+        )
+        return user_dict
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -133,11 +148,9 @@ async def google_login(redirect_uri: str, request: Request):
         if not google:
             raise HTTPException(status_code=500, detail="Google OAuth client not configured")
         
-        # Generate the authorization URL with proper state handling
         redirect_uri = redirect_uri or os.getenv('REDIRECT_URI', 'http://localhost:3000/google-callback')
         authorization_url, state = await google.create_authorization_url(
-            redirect_uri,
-            # Remove state parameter to let authlib handle it automatically
+            redirect_uri
         )
         
         print(f"Generated Google OAuth URL: {authorization_url}")
@@ -163,16 +176,12 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
             print("Google OAuth error: OAuth client not configured")
             raise HTTPException(status_code=500, detail="Google OAuth client not configured")
         
-        # Exchange code for token without explicit state validation
-        # Let authlib handle the state validation automatically
         try:
             token = await google.authorize_access_token(request)
         except OAuthError as oauth_err:
             print(f"Google OAuth error during token exchange: {str(oauth_err)} - Error: {oauth_err.error}, Description: {oauth_err.description}")
-            # If state mismatch, try without state validation as fallback
             if 'state' in str(oauth_err).lower() or 'csrf' in str(oauth_err).lower():
                 try:
-                    # Manual token exchange as fallback
                     import httpx
                     async with httpx.AsyncClient() as client:
                         token_response = await client.post(
@@ -189,8 +198,6 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
                             raise HTTPException(status_code=422, detail="Failed to exchange code for token")
                         
                         token_data = token_response.json()
-                        
-                        # Get user info
                         user_response = await client.get(
                             'https://www.googleapis.com/oauth2/v2/userinfo',
                             headers={'Authorization': f'Bearer {token_data["access_token"]}'}
@@ -230,10 +237,12 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
             await create_user(user)
         else:
             if not existing_user.get('google_id'):
-                await db.users.update_one(
-                    {"email": email},
-                    {"$set": {"google_id": google_id, "full_name": full_name}}
-                )
+                pool = await get_postgres_pool()
+                async with pool.acquire() as conn:
+                    await conn.execute(
+                        "UPDATE users SET google_id = $1, full_name = $2 WHERE email = $3",
+                        google_id, full_name, email
+                    )
         
         access_token = create_access_token(data={"sub": email})
         return {"access_token": access_token, "token_type": "bearer"}
