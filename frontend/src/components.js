@@ -12,14 +12,18 @@ import AppleSVG from './assets/apple.svg';
 import ArrowSVG from './assets/Arrow.svg';
 import SeventhSVG from './assets/icon.svg';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production';
+const BACKEND_URL = IS_PRODUCTION ? 'https://api.clario.co.in' : 'http://localhost:8001';
 const API = `${BACKEND_URL}/api`;
+const REDIRECT_URI = IS_PRODUCTION ? 'https://clario.co.in/google-callback' : 'http://localhost:3000/google-callback';
 
 // Debug logging
 console.log('Environment variables:', {
   REACT_APP_BACKEND_URL: process.env.REACT_APP_BACKEND_URL,
+  REACT_APP_ENVIRONMENT: process.env.REACT_APP_ENVIRONMENT,
   BACKEND_URL: BACKEND_URL,
-  API: API
+  API: API,
+  REDIRECT_URI: REDIRECT_URI
 });
 
 // Auth Context
@@ -135,7 +139,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
       const data = type === 'login'
         ? { email, password }
         : { email, password, full_name: fullName };
-
       const response = await axios.post(`${API}${endpoint}`, data);
       login(response.data.access_token);
       onClose();
@@ -151,14 +154,17 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
     if (isLoadingGoogle) return;
     setIsLoadingGoogle(true);
     setError('');
+
     try {
       console.log('Initiating Google OAuth login from AuthModal');
       const response = await axios.get(`${API}/auth/google/url`, {
-        params: { redirect_uri: 'http://localhost:3000/google-callback' }
+        params: { redirect_uri: REDIRECT_URI }
       });
+
       if (!response.data.url) {
         throw new Error('No authorization URL returned from backend');
       }
+
       console.log('Google OAuth URL:', response.data.url);
       const urlParams = new URLSearchParams(new URL(response.data.url).search);
       const state = urlParams.get('state');
@@ -195,7 +201,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
             ×
           </button>
         </div>
-
         {error && (
           <div style={{
             marginBottom: '1rem',
@@ -208,7 +213,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
             {error}
           </div>
         )}
-
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {type === 'signup' && (
             <div>
@@ -230,7 +234,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
               />
             </div>
           )}
-
           <div>
             <label style={{ display: 'block', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 'medium', color: '#374151', marginBottom: '0.5rem' }}>
               Email
@@ -250,7 +253,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
               required
             />
           </div>
-
           <div>
             <label style={{ display: 'block', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 'medium', color: '#374151', marginBottom: '0.5rem' }}>
               Password
@@ -270,7 +272,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
               required
             />
           </div>
-
           {type === 'signup' && (
             <div>
               <label style={{ display: 'block', fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: 'medium', color: '#374151', marginBottom: '0.5rem' }}>
@@ -292,7 +293,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
               />
             </div>
           )}
-
           <button
             type="submit"
             disabled={loading || isLoadingGoogle}
@@ -310,7 +310,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
             {loading ? 'Processing...' : (type === 'login' ? 'Log In' : 'Sign Up')}
           </button>
         </form>
-
         <div style={{ marginTop: '1rem' }}>
           <div style={{ position: 'relative' }}>
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
@@ -320,7 +319,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
               <span style={{ padding: '0 0.5rem', backgroundColor: '#fff', color: '#6B7280' }}>Or continue with</span>
             </div>
           </div>
-
           <div style={{ marginTop: '1rem' }}>
             <button
               onClick={handleGoogleLogin}
@@ -354,7 +352,6 @@ export const AuthModal = ({ isOpen, onClose, type }) => {
             </button>
           </div>
         </div>
-
         <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: 'clamp(12px, 3vw, 14px)', color: '#4B5563' }}>
           {type === 'login' ? (
             <>
@@ -406,14 +403,17 @@ export const HeroSection = () => {
     if (isLoadingGoogle) return;
     setIsLoadingGoogle(true);
     setError('');
+
     try {
       console.log('Initiating Google OAuth login from HeroSection');
       const response = await axios.get(`${API}/auth/google/url`, {
-        params: { redirect_uri: 'http://localhost:3000/google-callback' }
+        params: { redirect_uri: REDIRECT_URI }
       });
+
       if (!response.data.url) {
         throw new Error('No authorization URL returned from backend');
       }
+
       console.log('Google OAuth URL:', response.data.url);
       const urlParams = new URLSearchParams(new URL(response.data.url).search);
       const state = urlParams.get('state');
@@ -440,8 +440,10 @@ export const HeroSection = () => {
         toast.error('Please enter a valid email address');
         return;
     }
+
     setIsLoadingOtp(true);
     setError('');
+
     try {
         const response = await axios.post(`${API}/auth/send-otp`, { email: email.trim() });
         console.log('Send OTP response:', response.data);
@@ -481,8 +483,10 @@ export const HeroSection = () => {
       setError('Please enter a 6-digit code');
       return;
     }
+
     setIsLoadingOtp(true);
     setError('');
+
     try {
       const response = await axios.post(`${API}/auth/verify-otp`, {
         email: email.trim(),
@@ -544,7 +548,6 @@ export const HeroSection = () => {
             />
             Clario
           </h1>
-
           <h2 style={{
             maxWidth: '100%',
             color: '#1B263B',
@@ -557,7 +560,6 @@ export const HeroSection = () => {
           }}>
             Always adapting. Never forgetting.
           </h2>
-
           <p style={{
             color: '#1B263B',
             fontFamily: 'Poppins',
@@ -569,7 +571,6 @@ export const HeroSection = () => {
           }}>
             A memory powered companion that grows with you.
           </p>
-
           <div style={{
             width: 'min(95%, 550px)',
             height: 'auto',
@@ -644,7 +645,6 @@ export const HeroSection = () => {
                       {isLoadingGoogle ? 'Loading...' : 'Continue with Google'}
                     </span>
                   </button>
-
                   <button
                     onClick={handleAppleLogin}
                     disabled={isLoadingOtp}
@@ -682,7 +682,6 @@ export const HeroSection = () => {
                     </span>
                   </button>
                 </div>
-
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -711,7 +710,6 @@ export const HeroSection = () => {
                     background: '#000'
                   }} />
                 </div>
-
                 <input
                   type="email"
                   value={email}
@@ -728,7 +726,6 @@ export const HeroSection = () => {
                     opacity: isLoadingOtp ? '0.5' : '1'
                   }}
                 />
-
                 <button
                   onClick={handleEmailSubmit}
                   disabled={isLoadingOtp}
@@ -841,7 +838,6 @@ export const HeroSection = () => {
               </>
             )}
           </div>
-
           <button
             onClick={handleExploreClick}
             style={{
@@ -878,7 +874,6 @@ export const HeroSection = () => {
               }}
             />
           </button>
-
           <h2 ref={meetClarioRef} style={{
             color: '#1B263B',
             fontFamily: 'Outfit',
@@ -890,7 +885,6 @@ export const HeroSection = () => {
           }}>
             Meet Clario
           </h2>
-
           <p style={{
             maxWidth: '100%',
             color: '#1B263B',
@@ -904,7 +898,6 @@ export const HeroSection = () => {
           }}>
             Your smart companion that remembers, learns, and grows with you more than an assistant, it’s your journey’s memory powered partner.
           </p>
-
           <div style={{
             width: 'min(95%, 1150px)',
             maxHeight: openDropdown ? '600px' : '300px',
@@ -995,7 +988,6 @@ export const HeroSection = () => {
                 }} />
               </>
             )}
-
             {/* Second Heading */}
             <div style={{
               width: '100%',
@@ -1072,7 +1064,6 @@ export const HeroSection = () => {
                 }} />
               </>
             )}
-
             {/* Third Heading */}
             <div style={{
               width: '100%',
@@ -1115,7 +1106,6 @@ export const HeroSection = () => {
                 {openDropdown === 3 ? '−' : '+'}
               </button>
             </div>
-            
             {openDropdown === 3 && (
               <p style={{
                 width: 'min(95%, 999px)',
@@ -1135,7 +1125,6 @@ export const HeroSection = () => {
               </p>
             )}
           </div>
-
           {/* FAQ Section */}
           <div style={{ marginTop: '12rem' }}>
             <h2 style={{
@@ -1150,7 +1139,6 @@ export const HeroSection = () => {
             }}>
               Frequently asked questions
             </h2>
-
             <div style={{
               width: 'min(95%, 1150px)',
               margin: '0 auto',
@@ -1222,7 +1210,6 @@ export const HeroSection = () => {
                   }} />
                 </>
               )}
-
               <div style={{
                 width: '100%',
                 display: 'flex',
@@ -1286,7 +1273,6 @@ export const HeroSection = () => {
                   }} />
                 </>
               )}
-
               {/* FAQ 3 */}
               <div style={{
                 width: '100%',
@@ -1347,7 +1333,6 @@ export const HeroSection = () => {
           </div>
         </div>
       </section>
-
       {/* Bottom Container */}
       <div style={{
         height: 'min(449px, 60vh)',
@@ -1356,7 +1341,6 @@ export const HeroSection = () => {
         margin: 0,
         position: 'relative'
       }}></div>
-
       {/* Chat Modal */}
       {isChatOpen && (
         <ChatModal
@@ -1399,7 +1383,6 @@ export const ChatModal = ({ isOpen, onClose }) => {
         role: 'user',
         timestamp: new Date()
       };
-
       setMessages(prev => [...prev, newMessage]);
       setInputMessage('');
       setLoading(true);
@@ -1411,16 +1394,13 @@ export const ChatModal = ({ isOpen, onClose }) => {
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
         const aiMessage = {
           id: Date.now() + 1,
           content: response.data.message,
           role: 'assistant',
           timestamp: new Date()
         };
-
         setMessages(prev => [...prev, aiMessage]);
-
         if (!conversationId) {
           setConversationId(response.data.conversation_id);
         }

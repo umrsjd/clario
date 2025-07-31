@@ -13,19 +13,23 @@ import asyncpg
 
 router = APIRouter()
 
-# Explicitly load .env file
+# Load environment variables
 env_path = os.path.join(os.path.dirname(__file__), '.env')
 print(f"Looking for .env file at: {env_path}")
 if not os.path.exists(env_path):
     print(f"ERROR: .env file not found at {env_path}")
 load_dotenv(env_path)
 
+# Determine environment
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+REDIRECT_URI = 'https://clario.co.in/google-callback' if ENVIRONMENT == 'production' else 'http://localhost:3000/google-callback'
+
 # Environment variables
 config = Config('.env')
 print("Loaded environment variables:", {
     "GOOGLE_CLIENT_ID": os.getenv('GOOGLE_CLIENT_ID'),
     "GOOGLE_CLIENT_SECRET": os.getenv('GOOGLE_CLIENT_SECRET'),
-    "REDIRECT_URI": os.getenv('REDIRECT_URI')
+    "REDIRECT_URI": REDIRECT_URI
 })
 
 oauth = OAuth(config)
@@ -109,7 +113,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             raise HTTPException(status_code=401, detail="Invalid authentication credentials")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    
+
     user = await get_user_by_email(email)
     if user is None:
         raise HTTPException(status_code=401, detail="User not found")
@@ -120,7 +124,7 @@ async def register(user: User):
     existing_user = await get_user_by_email(user.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     await create_user(user)
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
@@ -130,7 +134,7 @@ async def login(user: User):
     db_user = await get_user_by_email(user.email)
     if not db_user or not pwd_context.verify(user.password, db_user['password']):
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    
+
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -143,16 +147,16 @@ async def google_login(redirect_uri: str, request: Request):
     try:
         if not os.getenv('GOOGLE_CLIENT_ID'):
             raise HTTPException(status_code=500, detail="Google Client ID not found in environment variables")
-        
+
         google = oauth.create_client('google')
         if not google:
             raise HTTPException(status_code=500, detail="Google OAuth client not configured")
-        
-        redirect_uri = redirect_uri or os.getenv('REDIRECT_URI', 'http://localhost:3000/google-callback')
+
+        redirect_uri = REDIRECT_URI
         authorization_url, state = await google.create_authorization_url(
             redirect_uri
         )
-        
+
         print(f"Generated Google OAuth URL: {authorization_url}")
         print(f"Generated state: {state}")
         print(f"Session after auth URL generation: {request.session}")
@@ -168,14 +172,14 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
         if not code:
             print("Google OAuth error: Authorization code is missing")
             raise HTTPException(status_code=422, detail="Missing authorization code")
-        
+
         print(f"Received authorization code: {code}")
         print(f"Session during callback: {request.session}")
         google = oauth.create_client('google')
         if not google:
             print("Google OAuth error: OAuth client not configured")
             raise HTTPException(status_code=500, detail="Google OAuth client not configured")
-        
+
         try:
             token = await google.authorize_access_token(request)
         except OAuthError as oauth_err:
@@ -191,12 +195,12 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
                                 'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),
                                 'code': code,
                                 'grant_type': 'authorization_code',
-                                'redirect_uri': os.getenv('REDIRECT_URI', 'http://localhost:3000/google-callback')
+                                'redirect_uri': REDIRECT_URI
                             }
                         )
                         if token_response.status_code != 200:
                             raise HTTPException(status_code=422, detail="Failed to exchange code for token")
-                        
+
                         token_data = token_response.json()
                         user_response = await client.get(
                             'https://www.googleapis.com/oauth2/v2/userinfo',
@@ -204,10 +208,10 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
                         )
                         if user_response.status_code != 200:
                             raise HTTPException(status_code=422, detail="Failed to get user info")
-                        
+
                         user_info = user_response.json()
                         token = {'userinfo': user_info}
-                        
+
                 except Exception as fallback_err:
                     print(f"Fallback token exchange also failed: {str(fallback_err)}")
                     raise HTTPException(status_code=422, detail=f"Failed to exchange code for token: {oauth_err.error} - {oauth_err.description}")
@@ -216,21 +220,20 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
         except Exception as token_err:
             print(f"Unexpected error during token exchange: {str(token_err)}")
             raise HTTPException(status_code=422, detail=f"Unexpected error during token exchange: {str(token_err)}")
-        
+
         print(f"Received token: {token}")
         user_info = token.get('userinfo')
         if not user_info:
             print("Google OAuth error: Failed to retrieve user info")
             raise HTTPException(status_code=400, detail="Failed to retrieve user info from Google")
-        
+
         email = user_info.get('email')
         full_name = user_info.get('name')
         google_id = user_info.get('sub') or user_info.get('id')
-
         if not email or not google_id:
             print(f"Google OAuth error: Invalid user info - email: {email}, google_id: {google_id}")
             raise HTTPException(status_code=400, detail="Invalid Google user info")
-        
+
         existing_user = await get_user_by_email(email)
         if not existing_user:
             user = User(email=email, full_name=full_name, google_id=google_id)
@@ -243,10 +246,10 @@ async def google_callback(request: Request, body: GoogleCallbackRequest):
                         "UPDATE users SET google_id = $1, full_name = $2 WHERE email = $3",
                         google_id, full_name, email
                     )
-        
+
         access_token = create_access_token(data={"sub": email})
         return {"access_token": access_token, "token_type": "bearer"}
-    
+
     except HTTPException:
         raise
     except Exception as e:

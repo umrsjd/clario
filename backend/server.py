@@ -19,6 +19,10 @@ import resend
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Determine environment
+ENVIRONMENT = os.getenv('ENVIRONMENT', 'development')
+IS_PRODUCTION = ENVIRONMENT == 'production'
+
 # Neon PostgreSQL connection
 neon_url = os.getenv('NEON_DATABASE_URL')
 if not neon_url:
@@ -41,7 +45,7 @@ app.add_middleware(
     secret_key=os.getenv('JWT_SECRET_KEY', 'f487fe27afc6ab766f95d455b5a1aaff2eec3633dc566f1d6d47d87a3ef655ac'),
     max_age=3600,
     same_site='lax',
-    https_only=False
+    https_only=IS_PRODUCTION  # Secure cookies in production
 )
 
 # Create a router with the /api prefix
@@ -60,9 +64,9 @@ async def generate_and_send_otp(email: str):
     import random
     code = ''.join([str(random.randint(0, 9)) for _ in range(6)])
     expires_at = datetime.utcnow() + timedelta(minutes=10)
-    
+
     logger.info(f"Generated OTP {code} for email: {email}")
-    
+
     # Store OTP in Neon
     try:
         pool = await get_postgres_pool()
@@ -76,7 +80,7 @@ async def generate_and_send_otp(email: str):
     except Exception as e:
         logger.error(f"Failed to store OTP in Neon: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to store OTP: {str(e)}")
-    
+
     # Send OTP via Resend
     try:
         email_params = {
@@ -100,7 +104,7 @@ async def generate_and_send_otp(email: str):
     except Exception as e:
         logger.error(f"Unexpected error in Resend: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
-    
+
     return {"message": "OTP sent successfully"}
 
 # Routes
@@ -137,17 +141,17 @@ async def verify_otp(request: OTPVerifyRequest):
         )
         if not result:
             raise HTTPException(status_code=400, detail="No OTP found for this email")
-        
+
         if result['expires_at'] < datetime.utcnow():
             await conn.execute("DELETE FROM otp_codes WHERE email = $1", request.email)
             raise HTTPException(status_code=400, detail="OTP has expired")
-        
+
         if result['code'] != request.code:
             raise HTTPException(status_code=400, detail="Invalid OTP")
-        
+
         # OTP is valid, delete it
         await conn.execute("DELETE FROM otp_codes WHERE email = $1", request.email)
-        
+
         # Create or update user in PostgreSQL
         user = await conn.fetchrow("SELECT email, full_name FROM users WHERE email = $1", request.email)
         if not user:
@@ -156,7 +160,7 @@ async def verify_otp(request: OTPVerifyRequest):
                 "INSERT INTO users (email, full_name) VALUES ($1, $2)",
                 request.email, full_name
             )
-        
+
         # Generate JWT token
         access_token = create_access_token(data={"sub": request.email})
         return {"access_token": access_token, "token_type": "bearer"}
@@ -164,7 +168,10 @@ async def verify_otp(request: OTPVerifyRequest):
 # Custom exception handler for CORS
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    headers = {"Access-Control-Allow-Origin": "http://localhost:3000", "Access-Control-Allow-Credentials": "true"}
+    headers = {
+        "Access-Control-Allow-Origin": "https://clario.co.in" if IS_PRODUCTION else "http://localhost:3000",
+        "Access-Control-Allow-Credentials": "true"
+    }
     return JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
@@ -173,7 +180,10 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def general_exception_handler(request: Request, exc: Exception):
-    headers = {"Access-Control-Allow-Origin": "http://localhost:3000", "Access-Control-Allow-Credentials": "true"}
+    headers = {
+        "Access-Control-Allow-Origin": "https://clario.co.in" if IS_PRODUCTION else "http://localhost:3000",
+        "Access-Control-Allow-Credentials": "true"
+    }
     logger.error(f"Unexpected error: {str(exc)}", exc_info=True)
     return JSONResponse(
         status_code=500,
@@ -191,7 +201,11 @@ app.include_router(api_router)
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://clario.co.in",
+        "https://www.clario.co.in"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
