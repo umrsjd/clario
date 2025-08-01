@@ -12,6 +12,7 @@ import jwt
 from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
+import httpx
 
 # Configure logging
 logging.basicConfig(
@@ -190,17 +191,42 @@ async def google_auth_url(request: Request, redirect_uri: str):
         raise HTTPException(status_code=500, detail="Failed to generate Google auth URL")
 
 @api_router.get("/auth/google/callback")
-async def google_callback(request: Request):
-    logger.debug(f"Processing Google OAuth callback: {request.query_params}")
+@api_router.post("/auth/google")
+async def google_callback_post(request: Request, body: dict):
+    logger.debug(f"Processing Google OAuth callback via POST: {body}")
     try:
-        token = await oauth.google.authorize_access_token(request)
-        user_info = token.get('userinfo')
-        if not user_info:
-            logger.error("No user info returned from Google OAuth")
-            raise HTTPException(status_code=400, detail="Failed to fetch user info")
+        code = body.get('code')
+        if not code:
+            logger.error("No authorization code provided")
+            raise HTTPException(status_code=422, detail="Missing authorization code")
+            
+        # Manual token exchange
+        async with httpx.AsyncClient() as client:
+            token_response = await client.post(
+                'https://oauth2.googleapis.com/token',
+                data={
+                    'client_id': os.getenv('GOOGLE_CLIENT_ID'),
+                    'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),
+                    'code': code,
+                    'grant_type': 'authorization_code',
+                    'redirect_uri': 'http://localhost:3000/google-callback' if os.getenv('ENVIRONMENT') == 'development' else 'https://clario.co.in/google-callback'
+                }
+            )
+            
+        if token_response.status_code != 200:
+            logger.error(f"Token exchange failed: {token_response.text}")
+            raise HTTPException(status_code=400, detail="Failed to exchange code for token")
+            
+        token_data = token_response.json()
+        id_token = token_data.get('id_token')
+        
+        # Get user info from ID token
+        user_info = jwt.decode(id_token, options={"verify_signature": False})
         email = user_info.get('email')
         full_name = user_info.get('name', email.split('@')[0])
         google_id = user_info.get('sub')
+        
+        # Create or update user
         pool = await get_postgres_pool()
         async with pool.acquire() as conn:
             user = await conn.fetchrow("SELECT email, full_name FROM users WHERE email = $1", email)
@@ -209,11 +235,13 @@ async def google_callback(request: Request):
                     "INSERT INTO users (email, full_name, google_id) VALUES ($1, $2, $3)",
                     email, full_name, google_id
                 )
+                
+        # Create JWT token
         access_token = create_access_token(data={"sub": email})
-        return RedirectResponse(url=f"/welcome?access_token={access_token}")
+        return {"access_token": access_token, "token_type": "bearer"}
     except Exception as e:
         logger.error(f"Google OAuth callback error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Google authentication failed")
+        raise HTTPException(status_code=500, detail=f"Google authentication failed: {str(e)}")
 
 @api_router.post("/auth/login")
 async def login(request: LoginRequest):
