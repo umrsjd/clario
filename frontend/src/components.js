@@ -406,7 +406,7 @@ export const HeroSection = () => {
     
     try {
       const response = await axios.get(`${API}/auth/google/url`, {
-        params: { redirect_uri: 'http://localhost:3000/google-callback' }
+        params: { redirect_uri: REDIRECT_URI }
       });
   
       // Handle both possible response structures
