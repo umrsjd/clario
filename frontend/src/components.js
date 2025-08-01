@@ -400,25 +400,39 @@ export const HeroSection = () => {
   const otpInputRefs = useRef([]);
 
   const handleGoogleLogin = async () => {
-    if (isLoadingGoogle) return;
     setIsLoadingGoogle(true);
     setError('');
-
+    console.log('Initiating Google OAuth login from HeroSection');
+    
     try {
-      console.log('Initiating Google OAuth login from HeroSection');
       const response = await axios.get(`${API}/auth/google/url`, {
-        params: { redirect_uri: REDIRECT_URI }
+        params: { redirect_uri: 'http://localhost:3000/google-callback' }
       });
-
-      if (!response.data.url) {
+  
+      // Handle both possible response structures
+      let authUrl, state;
+      
+      if (typeof response.data.url === 'string') {
+        // Simple structure: {url: string, state: string}
+        authUrl = response.data.url;
+        state = response.data.state;
+      } else if (response.data.url && typeof response.data.url === 'object') {
+        // Nested structure: {url: {url: string, state: string, nonce: string}}
+        authUrl = response.data.url.url;
+        state = response.data.url.state;
+      } else {
+        throw new Error('Invalid response structure from backend');
+      }
+  
+      if (!authUrl) {
         throw new Error('No authorization URL returned from backend');
       }
-
-      console.log('Google OAuth URL:', response.data.url);
-      const urlParams = new URLSearchParams(new URL(response.data.url).search);
-      const state = urlParams.get('state');
-      console.log('Generated state in HeroSection:', state);
-      window.location.href = response.data.url;
+  
+      console.log('Google OAuth URL:', authUrl);
+      const urlParams = new URLSearchParams(new URL(authUrl).search);
+      const extractedState = urlParams.get('state');
+      console.log('Generated state in HeroSection:', extractedState || state);
+      window.location.href = authUrl;
     } catch (err) {
       console.error('Google OAuth URL error:', err);
       const errorMessage = err.response?.data?.detail || 'Unable to connect to Google. Please try again later.';
