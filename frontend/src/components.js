@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useContext, createContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -93,15 +92,22 @@ export const Header = () => {
       </div>
       <div className="flex items-center space-x-4">
         {user ? (
-          <div className="flex items-center space-x-4">
-            <span className="text-gray-600">Hello, {user.full_name || user.email}</span>
-            <button
-              onClick={logout}
-              className="text-black hover:text-gray-600 transition-colors"
-            >
-              log out
-            </button>
-          </div>
+          <button
+            onClick={logout}
+            style={{
+              backgroundColor: '#1B263B',
+              color: '#FFFFFF',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.375rem',
+              fontSize: 'clamp(14px, 2.5vw, 16px)',
+              fontFamily: 'Outfit',
+              fontWeight: 400,
+              border: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            Logout
+          </button>
         ) : (
           <div></div> // Removed login and signup buttons
         )}
