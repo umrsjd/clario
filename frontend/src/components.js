@@ -1161,7 +1161,7 @@ export const HeroSection = () => {
               </>
             )}
             {/* Third Heading */}
-            seam
+            
             <div style={{
               width: '100%',
               display: 'flex',
