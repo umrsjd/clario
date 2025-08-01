@@ -13,6 +13,7 @@ from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 import httpx
+from auth import REDIRECT_URI
 
 # Configure logging
 logging.basicConfig(
@@ -209,7 +210,7 @@ async def google_callback_post(request: Request, body: dict):
                     'client_secret': os.getenv('GOOGLE_CLIENT_SECRET'),
                     'code': code,
                     'grant_type': 'authorization_code',
-                    'redirect_uri': 'http://localhost:3000/google-callback' if os.getenv('ENVIRONMENT') == 'development' else 'https://clario.co.in/google-callback'
+                    'redirect_uri': REDIRECT_URI
                 }
             )
             

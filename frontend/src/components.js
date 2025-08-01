@@ -1658,7 +1658,7 @@ export const GoogleCallback = () => {
               borderRadius: '50%',
               height: '3rem',
               width: '3rem',
-              border: '2px solid rgb(251, 191, 36)',
+              border: '2px solid rgb(0, 0, 0)',
               borderBottomColor: 'transparent',
               margin: '0 auto 1rem'
             }}></div>
