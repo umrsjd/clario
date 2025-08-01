@@ -13,6 +13,7 @@ from authlib.integrations.starlette_client import OAuth
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 import httpx
+from auth import REDIRECT_URI
 
 
 # Configure logging
