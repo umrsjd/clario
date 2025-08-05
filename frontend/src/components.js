@@ -8,7 +8,6 @@ import FifthSVG from './assets/fifth.svg';
 import SixthSVG from './assets/six.svg';
 import logo from './assets/logoo.svg';
 import GoogleSVG from './assets/google.svg';
-import AppleSVG from './assets/apple.svg';
 import ArrowSVG from './assets/Arrow.svg';
 import SeventhSVG from './assets/icon.svg';
 
@@ -450,10 +449,6 @@ export const HeroSection = () => {
     }
   };
 
-  const handleAppleLogin = () => {
-    navigate('/welcome'); // Navigate to FlashScreen (Apple login not implemented)
-  };
-
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     if (!email.trim()) {
@@ -578,7 +573,7 @@ export const HeroSection = () => {
             fontWeight: 500,
             lineHeight: 'normal',
             marginTop: '0',
-            marginBottom: '0.5rem',
+            marginBottom: '6rem',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -614,7 +609,7 @@ export const HeroSection = () => {
             fontStyle: 'normal',
             fontWeight: 400,
             lineHeight: 'normal',
-            marginBottom: '6rem'
+            marginBottom: '2rem'
           }}>
             A memory powered companion that grows with you.
           </p>
@@ -698,10 +693,10 @@ export const HeroSection = () => {
                 <>
                   <div style={{
                     display: 'flex',
-                    flexDirection: window.innerWidth <= 640 ? 'column' : 'row',
-                    gap: window.innerWidth <= 640 ? '0.5rem' : '0.75rem',
+                    flexDirection: 'column',
+                    gap: '0.75rem',
                     justifyContent: 'center',
-                    alignItems: window.innerWidth <= 640 ? 'center' : 'stretch',
+                    alignItems: 'center',
                     width: '100%'
                   }}>
                     <button
@@ -709,8 +704,8 @@ export const HeroSection = () => {
                       disabled={isLoadingGoogle || isLoadingOtp}
                       style={{
                         display: 'flex',
-                        width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
-                        padding: window.innerWidth <= 640 ? '0.5rem 1rem' : '0.75rem 1.5rem',
+                        width: 'min(95%, 500px)',
+                        padding: '0.75rem 1.5rem',
                         justifyContent: 'center',
                         alignItems: 'center',
                         gap: '0.5rem',
@@ -738,42 +733,6 @@ export const HeroSection = () => {
                         lineHeight: 'normal'
                       }}>
                         {isLoadingGoogle ? 'Loading...' : 'Continue with Google'}
-                      </span>
-                    </button>
-                    <button
-                      onClick={handleAppleLogin}
-                      disabled={isLoadingOtp}
-                      style={{
-                        display: 'flex',
-                        width: window.innerWidth <= 640 ? 'min(100%, 500px)' : 'min(48%, 240px)',
-                        padding: window.innerWidth <= 640 ? '0.5rem 1rem' : '0.75rem 1.5rem',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(153, 153, 153, 0.88)',
-                        background: '#fff',
-                        opacity: isLoadingOtp ? '0.5' : '1'
-                      }}
-                    >
-                      <img
-                        src={AppleSVG}
-                        alt="Apple Icon"
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          flexShrink: 0
-                        }}
-                      />
-                      <span style={{
-                        color: '#000',
-                        fontFamily: 'Outfit',
-                        fontSize: 'clamp(14px, 2.5vw, 16px)',
-                        fontStyle: 'normal',
-                        fontWeight: 400,
-                        lineHeight: 'normal'
-                      }}>
-                        Continue with Apple
                       </span>
                     </button>
                   </div>
