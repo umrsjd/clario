@@ -1,4 +1,4 @@
-// Updated component.js (the rest of the file remains unchanged except for the HeroSection return and adding the import)
+// component.js
 import React, { useState, useEffect, useContext, createContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -9,8 +9,6 @@ import logo from './assets/logoo.svg';
 import GoogleSVG from './assets/google.svg';
 import ArrowSVG from './assets/Arrow.svg';
 import SeventhSVG from './assets/icon.svg';
-import RectangleImage from './assets/rectangle.jpg';
-import RecTangleImage from './assets/Rec_tangle.jpg';
 import PhoneImage1 from './assets/1.svg';
 import PhoneImage2 from './assets/2.svg';
 import PhoneImage3 from './assets/3.svg';
@@ -18,8 +16,10 @@ import CanvaImage from './assets/canva.svg';
 import GroupSVG from './assets/Group.svg';
 import Group583SVG from './assets/Group 583.svg';
 import Group686SVG from './assets/Group 686.svg';
-import Product1SVG from './assets/product 1.svg';
-import HeroStyles from './HeroStyles'; // New import for the styles and ToastContainer
+
+import IPSVG from './assets/svg ip.svg';
+import SectionSVG from './assets/clario section.svg';
+import HeroStyles from './HeroStyles';
 
 const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production';
 const BACKEND_URL = IS_PRODUCTION ? 'https://api.clario.co.in' : 'http://localhost:8001';
@@ -192,7 +192,7 @@ export const HeroSection = () => {
 
   return (
     <>
-      <HeroStyles /> {/* Imported component that handles ToastContainer and all styles */}
+      <HeroStyles />
       <div className="gradient-background"></div>
       <section style={{
         padding: '0',
@@ -490,7 +490,7 @@ export const HeroSection = () => {
                 </p>
                 <img
                   className="section-image"
-                  src={RecTangleImage}
+                  src={SectionSVG}
                   alt="Real-Time Understanding"
                   style={{
                     height: 'clamp(200px, 60vw, 260px)',
@@ -534,7 +534,7 @@ export const HeroSection = () => {
                 </p>
                 <img
                   className="section-image"
-                  src={Product1SVG}
+                  src={IPSVG}
                   alt="Smart Replies"
                   style={{
                     height: 'clamp(200px, 60vw, 260px)',
@@ -635,58 +635,60 @@ export const HeroSection = () => {
             justifyContent: 'center',
             alignItems: 'flex-start'
           }}>
-            <p className="think-smarter-text-first" style={{
-              color: '#FFF',
-              fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: 'clamp(32px, 6vw, 76px)',
-              fontStyle: 'normal',
-              fontWeight: 500,
-              lineHeight: 'normal',
-              letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
-              margin: '0 0 clamp(0.5rem, 1vw, 1rem) 0',
-              whiteSpace: 'nowrap'
-            }}>
-              It’s time to think smarter
-            </p>
-            <p className="think-smarter-text-rest" style={{
-              color: '#4B4B4B',
-              fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: 'clamp(32px, 6vw, 76px)',
-              fontStyle: 'normal',
-              fontWeight: 500,
-              lineHeight: 'normal',
-              letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
-              margin: '0 0 clamp(0.5rem, 1vw, 1rem) 0',
-              whiteSpace: 'nowrap'
-            }}>
-              Decisions. Plans.
-            </p>
-            <p className="think-smarter-text-rest" style={{
-              color: '#4B4B4B',
-              fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: 'clamp(32px, 6vw, 76px)',
-              fontStyle: 'normal',
-              fontWeight: 500,
-              lineHeight: 'normal',
-              letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
-              margin: '0 0 clamp(0.5rem, 1vw, 1rem) 0',
-              whiteSpace: 'nowrap'
-            }}>
-              Conversations. Goals.
-            </p>
-            <p className="think-smarter-text-rest" style={{
-              color: '#4B4B4B',
-              fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-              fontSize: 'clamp(32px, 6vw, 76px)',
-              fontStyle: 'normal',
-              fontWeight: 500,
-              lineHeight: 'normal',
-              letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
-              margin: '0',
-              whiteSpace: 'nowrap'
-            }}>
-              Really, your whole life.
-            </p>
+            <div className="think-smarter-texts">
+              <p className="think-smarter-text-first" style={{
+                color: '#FFF',
+                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: 'clamp(32px, 6vw, 76px)',
+                fontStyle: 'normal',
+                fontWeight: 500,
+                lineHeight: 'normal',
+                letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
+                margin: '0 0 clamp(0.5rem, 1vw, 1rem) 0',
+                whiteSpace: 'nowrap'
+              }}>
+                It’s time to think smarter
+              </p>
+              <p className="think-smarter-text-rest" style={{
+                color: '#4B4B4B',
+                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: 'clamp(32px, 6vw, 76px)',
+                fontStyle: 'normal',
+                fontWeight: 500,
+                lineHeight: 'normal',
+                letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
+                margin: '0 0 clamp(0.5rem, 1vw, 1rem) 0',
+                whiteSpace: 'nowrap'
+              }}>
+                Decisions. Plans.
+              </p>
+              <p className="think-smarter-text-rest" style={{
+                color: '#4B4B4B',
+                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: 'clamp(32px, 6vw, 76px)',
+                fontStyle: 'normal',
+                fontWeight: 500,
+                lineHeight: 'normal',
+                letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
+                margin: '0 0 clamp(0.5rem, 1vw, 1rem) 0',
+                whiteSpace: 'nowrap'
+              }}>
+                Conversations. Goals.
+              </p>
+              <p className="think-smarter-text-rest" style={{
+                color: '#4B4B4B',
+                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: 'clamp(32px, 6vw, 76px)',
+                fontStyle: 'normal',
+                fontWeight: 500,
+                lineHeight: 'normal',
+                letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
+                margin: '0',
+                whiteSpace: 'nowrap'
+              }}>
+                Really, your whole life.
+              </p>
+            </div>
           </div>
           <div className="new-container" style={{
             width: 'min(100%, 1480px)',
@@ -744,21 +746,23 @@ export const HeroSection = () => {
                   Everywhere You Are.
                 </p>
               </div>
-              <p className="new-subtext" style={{
-                width: window.innerWidth <= 480 ? '100%' : '556px',
-                color: '#282828',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: window.innerWidth <= 480 ? 'clamp(14px, 4vw, 18px)' : '24px',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                lineHeight: 'normal',
-                margin: window.innerWidth <= 480 ? 'clamp(1rem, 3vw, 1.5rem) auto 0' : '2rem 0 0 2rem',
-                padding: window.innerWidth <= 480 ? '0 clamp(0.5rem, 2vw, 1rem)' : '0',
-                textAlign: window.innerWidth <= 480 ? 'center' : 'left',
-                whiteSpace: 'normal'
-              }}>
-                Clario moves with you across iOS, Android, and Mac. Learning once, remembering always. Whether you’re texting, working, or on the go, your intelligence stays synced so you never lose context.
-              </p>
+              <div className="subtext-container">
+                <p className="new-subtext" style={{
+                  width: window.innerWidth <= 480 ? '100%' : '556px',
+                  color: '#282828',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: window.innerWidth <= 480 ? 'clamp(14px, 4vw, 18px)' : '24px',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  margin: window.innerWidth <= 480 ? 'clamp(1rem, 3vw, 1.5rem) auto 0' : '2rem 0 0 2rem',
+                  padding: window.innerWidth <= 480 ? '0 clamp(0.5rem, 2vw, 1rem)' : '0',
+                  textAlign: window.innerWidth <= 480 ? 'center' : 'left',
+                  whiteSpace: 'normal'
+                }}>
+                  Clario moves with you across iOS, Android, and Mac. Learning once, remembering always. Whether you’re texting, working, or on the go, your intelligence stays synced so you never lose context.
+                </p>
+              </div>
             </div>
             <img
               className="new-image"
@@ -954,7 +958,7 @@ export const HeroSection = () => {
               </button>
             </div>
             {openDropdown === 4 && (
-              <p className="faq-answer" style={{
+              <p className={`faq-answer ${openDropdown === 4 ? 'open' : ''}`} style={{
                 width: 'min(95%, 967px)',
                 color: '#1B263B',
                 fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
@@ -1010,7 +1014,7 @@ export const HeroSection = () => {
               </button>
             </div>
             {openDropdown === 5 && (
-              <p className="faq-answer" style={{
+              <p className={`faq-answer ${openDropdown === 5 ? 'open' : ''}`} style={{
                 width: 'min(95%, 967px)',
                 color: '#1B263B',
                
@@ -1067,7 +1071,7 @@ export const HeroSection = () => {
               </button>
             </div>
             {openDropdown === 6 && (
-              <p className="faq-answer" style={{
+              <p className={`faq-answer ${openDropdown === 6 ? 'open' : ''}`} style={{
                 width: 'min(95%, 967px)',
                 color: '#1B263B',
                 fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
@@ -1203,7 +1207,7 @@ export const HeroSection = () => {
                   gap: 'clamp(1.5rem, 3vw, 2rem)',
                   justifyItems: 'start',
                   width: window.innerWidth <= 480 ? '100%' : 'auto',
-                  margin: window.innerWidth <= 480 ? 'clamp(1rem, 3vw, 2rem) auto 0' : '0'
+                  margin: window.innerWidth <= 480 ? 'clamp(1rem, 3vw, 2rem) auto 0' : '1rem'
                 }}>
                   <div className="footer-links-column">
                     <p style={{
@@ -1214,7 +1218,6 @@ export const HeroSection = () => {
                       fontWeight: 600,
                       lineHeight: 'clamp(16px, 3.5vw, 18px)',
                       textTransform: 'capitalize',
-                      width: 'clamp(40px, 10vw, 43px)',
                       margin: 0
                     }}>
                       Legal
@@ -1226,7 +1229,7 @@ export const HeroSection = () => {
                       fontStyle: 'normal',
                       fontWeight: 500,
                       lineHeight: 'clamp(20px, 4vw, 24px)',
-                      margin: 'clamp(0.5rem, 1.5vw, 1rem) 0 0 0'
+                      margin: 'clamp(0.25rem, 0.75vw, 0.5rem) 0 0 0'
                     }}>
                       Privacy Policy
                     </p>
@@ -1237,7 +1240,7 @@ export const HeroSection = () => {
                       fontStyle: 'normal',
                       fontWeight: 500,
                       lineHeight: 'clamp(20px, 4vw, 24px)',
-                      margin: 'clamp(0.5rem, 1.5vw, 1rem) 0 0 0'
+                      margin: 'clamp(0.25rem, 0.75vw, 0.5rem) 0 0 0'
                     }}>
                       Terms of Service
                     </p>
@@ -1262,7 +1265,7 @@ export const HeroSection = () => {
                       fontStyle: 'normal',
                       fontWeight: 500,
                       lineHeight: 'clamp(20px, 4vw, 24px)',
-                      margin: 'clamp(0.5rem, 1.5vw, 1rem) 0 0 0'
+                      margin: 'clamp(0.25rem, 0.75vw, 0.5rem) 0 0 0'
                     }}>
                       Sales
                     </p>
@@ -1273,7 +1276,7 @@ export const HeroSection = () => {
                       fontStyle: 'normal',
                       fontWeight: 500,
                       lineHeight: 'clamp(20px, 4vw, 24px)',
-                      margin: 'clamp(0.5rem, 1.5vw, 1rem) 0 0 0'
+                      margin: 'clamp(0.25rem, 0.75vw, 0.5rem) 0 0 0'
                     }}>
                       Support
                     </p>
@@ -1298,7 +1301,7 @@ export const HeroSection = () => {
                       fontStyle: 'normal',
                       fontWeight: 500,
                       lineHeight: 'clamp(20px, 4vw, 24px)',
-                      margin: 'clamp(0.5rem, 1.5vw, 1rem) 0 0 0'
+                      margin: 'clamp(0.25rem, 0.75vw, 0.5rem) 0 0 0'
                     }}>
                       Pricing
                     </p>
@@ -1309,7 +1312,7 @@ export const HeroSection = () => {
                       fontStyle: 'normal',
                       fontWeight: 500,
                       lineHeight: 'clamp(20px, 4vw, 24px)',
-                      margin: 'clamp(0.5rem, 1.5vw, 1rem) 0 0 0'
+                      margin: 'clamp(0.25rem, 0.75vw, 0.5rem) 0 0 0'
                     }}>
                       Manifesto
                     </p>
@@ -1334,7 +1337,7 @@ export const HeroSection = () => {
                       fontStyle: 'normal',
                       fontWeight: 500,
                       lineHeight: 'clamp(20px, 4vw, 24px)',
-                      margin: 'clamp(0.5rem, 1.5vw, 1rem) 0 0 0'
+                      margin: 'clamp(0.25rem, 0.75vw, 0.5rem) 0 0 0'
                     }}>
                       Help Center
                     </p>
@@ -1345,7 +1348,7 @@ export const HeroSection = () => {
                       fontStyle: 'normal',
                       fontWeight: 500,
                       lineHeight: 'clamp(20px, 4vw, 24px)',
-                      margin: 'clamp(0.5rem, 1.5vw, 1rem) 0 0 0'
+                      margin: 'clamp(0.25rem, 0.75vw, 0.5rem) 0 0 0'
                     }}>
                       Contact Us
                     </p>

@@ -1,4 +1,3 @@
-// HeroStyles.js
 import React from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -19,6 +18,16 @@ const HeroStyles = () => {
           }
           .feature-text:hover, .feature-text:active {
             color: #3D74B6 !important;
+          }
+          .faq-answer {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, margin 0.3s ease-in-out;
+          }
+          .faq-answer.open {
+            max-height: 500px;
+            opacity: 1;
           }
           @media (max-width: 480px) {
             .feature-text-container {
@@ -224,7 +233,7 @@ const HeroStyles = () => {
             .footer-links-column {
               display: flex;
               flex-direction: column;
-              gap: clamp(0.5rem, 1.5vw, 1rem);
+              gap: clamp(0.25rem, 0.75vw, 0.5rem);
             }
             .question-container {
               width: 100%;
@@ -409,7 +418,7 @@ const HeroStyles = () => {
               white-space: nowrap;
             }
             .new-container {
-              width: min(100%, clamp(900px, 90vw, 1480px));
+              width: calc(100% - 3rem);
               height: clamp(400px, 50vw, 750px);
               border-radius: clamp(30px, 5vw, 50px);
               background: #E2EFFF;
@@ -430,6 +439,24 @@ const HeroStyles = () => {
               font-size: clamp(36px, 8vw, 68px);
               letter-spacing: clamp(-1.44px, -0.3vw, -2.72px);
               white-space: normal;
+            }
+            .subtext-container {
+              position: relative;
+              z-index: 1;
+            }
+            .subtext-container::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              border-radius: 50px;
+              border: 1px solid #9F9F9F;
+              opacity: 0.4;
+              background: #E2EFFF;
+              filter: blur(5px);
+              z-index: -1;
             }
             .new-subtext {
               width: min(100%, clamp(350px, 50vw, 556px));
@@ -526,7 +553,7 @@ const HeroStyles = () => {
             .footer-links-column {
               display: flex;
               flex-direction: column;
-              gap: clamp(0.5rem, 1.5vw, 1rem);
+              gap: clamp(0.25rem, 0.75vw, 0.5rem);
             }
             .question-container {
               width: min(100%, clamp(500px, 80vw, 661.668px));
@@ -654,6 +681,10 @@ const HeroStyles = () => {
               right: 0;
               box-sizing: border-box;
             }
+            .think-smarter-texts {
+              margin-left: 14rem;
+              margin-right: 2rem;
+            }
             .think-smarter-text-first {
               font-size: clamp(32px, 6vw, 76px);
               letter-spacing: clamp(-1.28px, -0.3vw, -3.84px);
@@ -665,7 +696,7 @@ const HeroStyles = () => {
               white-space: nowrap;
             }
             .new-container {
-              width: min(100%, 1480px);
+              width: calc(100% - 3rem);
               height: 750px;
               border-radius: 50px;
               background: #E2EFFF;
@@ -686,6 +717,24 @@ const HeroStyles = () => {
               font-size: 68px;
               letter-spacing: -2.72px;
               white-space: normal;
+            }
+            .subtext-container {
+              position: relative;
+              z-index: 1;
+            }
+            .subtext-container::before {
+              content: '';
+              position: absolute;
+              top: 0;
+              left: 0;
+              width: 100%;
+              height: 100%;
+              border-radius: 50px;
+              border: 1px solid #9F9F9F;
+              opacity: 0.4;
+              background: #E2EFFF;
+              filter: blur(5px);
+              z-index: -1;
             }
             .new-subtext {
               width: 556px;
@@ -782,7 +831,7 @@ const HeroStyles = () => {
             .footer-links-column {
               display: flex;
               flex-direction: column;
-              gap: clamp(0.5rem, 1.5vw, 1rem);
+              gap: clamp(0.25rem, 0.75vw, 0.5rem);
             }
             .question-container {
               width: min(100%, 661.668px);
