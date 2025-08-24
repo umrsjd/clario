@@ -12,11 +12,14 @@ import ArrowSVG from './assets/Arrow.svg';
 import SeventhSVG from './assets/icon.svg';
 import RectangleImage from './assets/rectangle.jpg';
 import RecTangleImage from './assets/Rec_tangle.jpg';
-import PhoneImage1 from './assets/1.png';
-import PhoneImage2 from './assets/2.png';
-import PhoneImage3 from './assets/3.png';
-import CanvaImage from './assets/canva.png';
+import PhoneImage1 from './assets/1.svg';
+import PhoneImage2 from './assets/2.svg';
+import PhoneImage3 from './assets/3.svg';
+import CanvaImage from './assets/canva.svg';
 import GroupSVG from './assets/Group.svg';
+import Group583SVG from './assets/Group 583.svg';
+import Group686SVG from './assets/Group 686.svg';
+import Product1SVG from './assets/product 1.svg';
 
 const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production';
 const BACKEND_URL = IS_PRODUCTION ? 'https://api.clario.co.in' : 'http://localhost:8001';
@@ -95,8 +98,8 @@ export const Header = () => {
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-4 bg-transparent">
-      <div className="flex items-center">
+    <header className="flex items-center justify-between px-10 py-6 bg-transparent">
+      <div className="logo-container flex items-center">
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -123,13 +126,13 @@ export const Header = () => {
           </span>
         </div>
       </div>
-      <div className="flex items-center space-x-4">
+      <div className="button-container flex items-center space-x-4">
         <button
           onClick={handleTryClick}
           style={{
             display: 'flex',
-            width: 'clamp(90px, 9vw, 120px)',
-            height: 'clamp(28px, 3.5vw, 36px)',
+            width: 'clamp(90px, 9vw, 130px)',
+            height: 'clamp(28px, 3.5vw, 47px)',
             flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
@@ -143,7 +146,7 @@ export const Header = () => {
           <span style={{
             color: '#3D74B6',
             fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-            fontSize: 'clamp(12px, 1.8vw, 16px)',
+            fontSize: 'clamp(12px, 1.8vw, 18px)',
             fontStyle: 'normal',
             fontWeight: 500,
             lineHeight: 'normal'
@@ -205,7 +208,7 @@ export const HeroSection = () => {
           }
           @media (max-width: 480px) {
             .feature-text-container {
-              gap: 0.3rem;
+              gap: 0.8rem;
             }
             .feature-text {
               flex: 1 1 calc(50% - 0.15rem);
@@ -420,11 +423,28 @@ export const HeroSection = () => {
               background: rgba(255, 255, 255, 0.01);
               box-shadow: 0 4px 10px 8px #FFF inset, 0 4px 20px 0 rgba(0, 0, 0, 0.02) inset, 0 4px 20px 0 rgba(0, 0, 0, 0.05) inset, 0 4px 22px 9px rgba(61, 116, 182, 0.25);
               backdrop-filter: blur(10px);
-              margin: clamp(2rem, 5vw, 3rem) auto 0;
+              margin: 0 auto;
               padding: clamp(1rem, 2.5vw, 1.5rem);
               display: flex;
               flex-direction: column;
               align-items: flex-start;
+            }
+            .question-wrapper {
+              position: relative;
+              display: flex;
+              align-items: flex-start;
+              width: 100%;
+              max-width: clamp(300px, 90vw, 400px);
+              margin: clamp(0rem, 3vw, 3rem) auto 0;
+            }
+            .question-icon-right {
+              position: absolute;
+              top: 50%;
+              left: calc(100% + -1rem);
+              transform: translateY(calc(-50% - 5rem));
+              width: 84px;
+              height: 84px;
+              flex-shrink: 0;
             }
             .question-text-container {
               display: flex;
@@ -443,6 +463,7 @@ export const HeroSection = () => {
               max-width: clamp(260px, 80vw, 340px);
               word-break: break-word;
               overflow-wrap: break-word;
+              
             }
             .suggestion-text-container {
               font-size: clamp(14px, 3.5vw, 16px);
@@ -454,19 +475,63 @@ export const HeroSection = () => {
               top: 0;
               left: 0;
               width: 100vw;
-              height: clamp(600px, 180vw, 700px); /* Adjusted for mobile to end slightly below question container */
+              height: clamp(600px, 180vw, 700px);
               flex-shrink: 0;
               background: linear-gradient(287deg, #D0E5FF 4.24%, #FFF 98.16%);
               filter: blur(50px);
               z-index: -1;
             }
             .normal-background {
-              background: #FFF; /* Normal white background after gradient */
+              background: #FFF;
+            }
+            .feature-section-p {
+              width: 100%;
+              margin: 0 auto;
+              text-align: center;
+            }
+            .feature-text-container {
+              width: 100%;
+              margin: 0 auto;
+              justify-content: center;
+            }
+            .image-container {
+              justify-content: center;
+            }
+            .image-container img {
+              width: 100%;
+              height: auto;
+              max-height: 100vh;
             }
           }
           @media (min-width: 481px) {
+            .logo-container {
+              margin-left: clamp(2rem, 4vw, 4rem);
+            }
+            .button-container {
+              margin-right: clamp(2rem, 4vw, 4rem);
+            }
             .feature-text-container {
-              gap: 0.8rem;
+              gap: clamp(0.2rem, 1vw, 0.5rem);
+              width: min(100%, 861.382px);
+              justify-content: flex-start;
+              margin-left: 0;
+              margin-right: auto;
+            }
+            .feature-section-p {
+              width: min(100%, 861.382px);
+              text-align: left;
+              margin-left: 0;
+              margin-right: auto;
+            }
+            .image-container {
+              justify-content: flex-start;
+              margin-left: 0;
+              margin-right: auto;
+            }
+            .image-container img {
+              width: min(100%, 1314px);
+              height: auto;
+              max-height: 100vh;
             }
             .feature-text {
               flex: 1 1 auto;
@@ -659,11 +724,27 @@ export const HeroSection = () => {
               background: rgba(255, 255, 255, 0.01);
               box-shadow: 0 4px 10px 8px #FFF inset, 0 4px 20px 0 rgba(0, 0, 0, 0.02) inset, 0 4px 20px 0 rgba(0, 0, 0, 0.05) inset, 0 4px 22px 9px rgba(61, 116, 182, 0.25);
               backdrop-filter: blur(10px);
-              margin: clamp(4rem, 8vw, 5rem) auto 0;
+              margin: 0 auto;
               padding: clamp(1.5rem, 3vw, 2rem);
               display: flex;
               flex-direction: column;
               align-items: flex-start;
+            }
+            .question-wrapper {
+              position: relative;
+              display: flex;
+              align-items: flex-start;
+              width: min(100%, clamp(500px, 80vw, 661.668px));
+              margin: clamp(2rem, 6vw, 3rem) auto 0;
+            }
+            .question-icon-right {
+              position: absolute;
+              top: 50%;
+              left: calc(100% + -1rem);
+              transform: translateY(calc(-50% - 5rem));
+              width: 84px;
+              height: 84px;
+              flex-shrink: 0;
             }
             .question-text-container {
               display: flex;
@@ -681,6 +762,7 @@ export const HeroSection = () => {
               width: min(100%, clamp(400px, 75vw, 518px));
               word-break: break-word;
               overflow-wrap: break-word;
+              
             }
             .suggestion-text-container {
               font-size: clamp(16px, 3vw, 20px);
@@ -692,19 +774,45 @@ export const HeroSection = () => {
               top: 0;
               left: 0;
               width: 100vw;
-              height: 1045px; /* Original height for desktop */
+              height: 1045px;
               flex-shrink: 0;
               background: linear-gradient(287deg, #D0E5FF 4.24%, #FFF 98.16%);
               filter: blur(50px);
               z-index: -1;
             }
             .normal-background {
-              background: #FFF; /* Normal white background */
+              background: #FFF;
             }
           }
           @media (min-width: 1025px) {
+            .logo-container {
+              margin-left: clamp(2rem, 4vw, 4rem);
+            }
+            .button-container {
+              margin-right: clamp(2rem, 4vw, 4rem);
+            }
             .feature-text-container {
-              gap: 0.8rem;
+              gap: clamp(0.2rem, 1vw, 0.5rem);
+              width: min(100%, 861.382px);
+              justify-content: flex-start;
+              margin-left: 0;
+              margin-right: auto;
+            }
+            .feature-section-p {
+              width: min(100%, 861.382px);
+              text-align: left;
+              margin-left: 0;
+              margin-right: auto;
+            }
+            .image-container {
+              justify-content: flex-start;
+              margin-left: 0;
+              margin-right: auto;
+            }
+            .image-container img {
+              width: min(100%, 1314px);
+              height: auto;
+              max-height: 100vh;
             }
             .feature-text {
               flex: 1 1 auto;
@@ -864,18 +972,35 @@ export const HeroSection = () => {
             }
             .question-container {
               width: min(100%, 661.668px);
-              height: 233.005px;
+              height: auto;
+              min-height: clamp(200px, 30vw, 233.005px);
               transform: rotate(-0.363deg);
               border-radius: 25px;
               border: 1px solid #FFF;
               background: rgba(255, 255, 255, 0.01);
               box-shadow: 0 4px 10px 8px #FFF inset, 0 4px 20px 0 rgba(0, 0, 0, 0.02) inset, 0 4px 20px 0 rgba(0, 0, 0, 0.05) inset, 0 4px 22px 9px rgba(61, 116, 182, 0.25);
               backdrop-filter: blur(10px);
-              margin: clamp(4rem, 8vw, 5rem) auto 0;
+              margin: 0 auto;
               padding: clamp(1.5rem, 3vw, 2rem);
               display: flex;
               flex-direction: column;
               align-items: flex-start;
+            }
+            .question-wrapper {
+              position: relative;
+              display: flex;
+              align-items: flex-start;
+              width: min(100%, 661.668px);
+              margin: clamp(2rem, 6vw, 3rem) auto 0;
+            }
+            .question-icon-right {
+              position: absolute;
+              top: 50%;
+              left: calc(100% + 1rem);
+              transform: translateY(calc(-50% - 5rem));
+              width: 94px;
+              height: 94px;
+              flex-shrink: 0;
             }
             .question-text-container {
               display: flex;
@@ -904,14 +1029,14 @@ export const HeroSection = () => {
               top: 0;
               left: 0;
               width: 100vw;
-              height: 1045px; /* Original height for desktop */
+              height: 1045px;
               flex-shrink: 0;
               background: linear-gradient(287deg, #D0E5FF 4.24%, #FFF 98.16%);
               filter: blur(50px);
               z-index: -1;
             }
             .normal-background {
-              background: #FFF; /* Normal white background */
+              background: #FFF;
             }
           }
         `}
@@ -935,7 +1060,7 @@ export const HeroSection = () => {
             margin: 'clamp(2rem, 5vw, 4rem) auto'
           }}>
             <h1 style={{
-              width: 'clamp(280px, 55vw, 655px)',
+              width: 'clamp(280px, 55vw, 750px)',
               color: '#1E1E1E',
               fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
               fontSize: 'clamp(36px, 8vw, 72px)',
@@ -947,7 +1072,7 @@ export const HeroSection = () => {
               textAlign: 'left',
               display: 'inline-block'
             }}>
-              It’s like life, but with cheat codes.
+              It’s like life,<br />but with cheat codes.
             </h1>
             <p style={{
               width: 'clamp(280px, 55vw, 655px)',
@@ -994,103 +1119,110 @@ export const HeroSection = () => {
                 </span>
               </button>
             </div>
-            <div className="question-container" style={{
-              width: 'min(100%, clamp(300px, 90vw, 661.668px))',
-              height: 'auto',
-              minHeight: 'clamp(150px, 40vw, 233.005px)',
-              transform: 'rotate(-0deg)',
-              flexShrink: 0,
-              borderRadius: 'clamp(12px, 3vw, 25px)',
-              border: '1px solid #FFF',
-              background: 'rgba(255, 255, 255, 0.01)',
-              boxShadow: '0 4px 10px 8px #FFF inset, 0 4px 20px 0 rgba(0, 0, 0, 0.02) inset, 0 4px 20px 0 rgba(0, 0, 0, 0.05) inset, 0 4px 22px 9px rgba(61, 116, 182, 0.25)',
-              backdropFilter: 'blur(10px)',
-              margin: 'clamp(2rem, 5vw, 5rem) auto 0',
-              padding: 'clamp(1rem, 2.5vw, 2rem)',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start'
-            }}>
-              <div className="question-text-container">
-                <img
-                  src={GroupSVG}
-                  alt="Question Icon"
-                  style={{
-                    width: 'clamp(20px, 5vw, 28px)',
-                    height: 'clamp(20px, 5vw, 28px)',
-                    transform: 'rotate(15.647deg)',
-                    flexShrink: 0
-                  }}
-                />
-                <p className="question-text" style={{
-                  color: '#525252',
-                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: 'clamp(14px, 3.5vw, 20px)',
-                  fontStyle: 'normal',
-                  fontWeight: 500,
-                  lineHeight: 'normal',
-                  textTransform: 'capitalize',
-                  margin: 0,
-                  wordBreak: 'break-word',
-                  overflowWrap: 'break-word'
-                }}>
-                  Question: Why would I even use Clario?
-                </p>
-              </div>
-              <p className="answer-text" style={{
-                color: '#000',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: 'clamp(14px, 3.5vw, 20px)',
-                fontStyle: 'normal',
-                fontWeight: 500,
-                lineHeight: 'normal',
-                textTransform: 'capitalize',
-                margin: 'clamp(0.5rem, 1.5vw, 2rem) 0 0 0',
-                width: 'min(100%, clamp(260px, 80vw, 518px))',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word'
+            <div className="question-wrapper">
+              <div className="question-container" style={{
+                width: 'min(100%, clamp(300px, 90vw, 661.668px))',
+                height: 'auto',
+                minHeight: 'clamp(150px, 40vw, 233.005px)',
+                transform: 'rotate(-0deg)',
+                flexShrink: 0,
+                borderRadius: 'clamp(12px, 3vw, 25px)',
+                border: '1px solid #FFF',
+                background: 'rgba(255, 255, 255, 0.01)',
+                boxShadow: '0 4px 10px 8px #FFF inset, 0 4px 20px 0 rgba(0, 0, 0, 0.02) inset, 0 4px 20px 0 rgba(0, 0, 0, 0.05) inset, 0 4px 22px 9px rgba(61, 116, 182, 0.25)',
+                backdropFilter: 'blur(10px)',
+                margin: '0 auto',
+                padding: 'clamp(1rem, 2.5vw, 2rem)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start'
               }}>
-                Because advice is only good when it’s personal. Clario grows with you, so every suggestion fits you, not just the question you asked.
-              </p>
-              <p className="suggestion-text-container" style={{
-                margin: 'clamp(1rem, 2.5vw, 4rem) 0 0 0',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word'
-              }}>
-                <span style={{
-                  color: '#666',
-                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: 'clamp(14px, 3.5vw, 20px)',
-                  fontStyle: 'normal',
-                  fontWeight: 400,
-                  lineHeight: 'normal',
-                  textTransform: 'capitalize'
-                }}>
-                  Suggestion:{' '}
-                </span>
-                <span style={{
+                <div className="question-text-container">
+                  <img
+                    src={GroupSVG}
+                    alt="Question Icon"
+                    style={{
+                      width: 'clamp(20px, 5vw, 33px)',
+                      height: 'clamp(20px, 5vw, 33px)',
+                      transform: 'rotate(15.647deg)',
+                      flexShrink: 0
+                    }}
+                  />
+                  <p className="question-text" style={{
+                    color: '#525252',
+                    fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: 'clamp(14px, 3.5vw, 20px)',
+                    fontStyle: 'normal',
+                    fontWeight: 500,
+                    lineHeight: 'normal',
+                    textTransform: 'capitalize',
+                    margin: 0,
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word'
+                  }}>
+                    Question: Why would I even use Clario?
+                  </p>
+                </div>
+                <p className="answer-text" style={{
                   color: '#000',
                   fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
                   fontSize: 'clamp(14px, 3.5vw, 20px)',
                   fontStyle: 'normal',
                   fontWeight: 500,
                   lineHeight: 'normal',
-                  textTransform: 'capitalize'
+                  textTransform: 'capitalize',
+                  margin: 'clamp(0.5rem, 1.5vw, 2rem) 0 0 0',
+                  width: 'min(100%, clamp(260px, 80vw, 518px))',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word'
                 }}>
-                  I'm sure clario will change your life.
-                </span>
-              </p>
+                  Because advice is only good when it’s personal. Clario grows with you, so every suggestion fits you, not just the question you asked.
+                </p>
+                <p className="suggestion-text-container" style={{
+                  margin: 'clamp(1rem, 2.5vw, 4rem) 0 0 0',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word'
+                }}>
+                  <span style={{
+                    color: '#666',
+                    fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: 'clamp(14px, 3.5vw, 20px)',
+                    fontStyle: 'normal',
+                    fontWeight: 400,
+                    lineHeight: 'normal',
+                    textTransform: 'capitalize'
+                  }}>
+                    Suggestion:{' '}
+                  </span>
+                  <span style={{
+                    color: '#000',
+                    fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                    fontSize: 'clamp(14px, 3.5vw, 20px)',
+                    fontStyle: 'normal',
+                    fontWeight: 500,
+                    lineHeight: 'normal',
+                    textTransform: 'capitalize'
+                  }}>
+                    I'm sure clario will change your life.
+                  </span>
+                </p>
+              </div>
+              <img
+                src={Group583SVG}
+                alt="Group 583 Icon"
+                className="question-icon-right"
+              />
             </div>
           </div>
           <div className="normal-background" style={{
-            marginTop: '295px',
+            marginTop: '395px',
             marginLeft: '0'
           }}>
-            <p style={{
+            <p className="feature-section-p" style={{
               width: 'min(100%, 861.382px)',
               whiteSpace: 'pre-wrap',
-              textAlign: 'left',
-              margin: '0 0 1rem 0'
+              textAlign: window.innerWidth <= 480 ? 'center' : 'left',
+              margin: window.innerWidth <= 480 ? '0 auto 1rem' : '0 0 1rem -8rem'
             }}>
               <span style={{
                 color: '#3D74B6',
@@ -1119,8 +1251,10 @@ export const HeroSection = () => {
               display: 'flex',
               flexDirection: 'row',
               flexWrap: 'wrap',
-              gap: 'clamp(0.3rem, 1.5vw, 0.8rem)',
-              textAlign: 'left'
+              gap: 'clamp(0.2rem, 1vw, 0.5rem)',
+              textAlign: window.innerWidth <= 480 ? 'center' : 'left',
+              margin: window.innerWidth <= 480 ? '0 auto 1rem' : '0 0 1rem -8rem',
+              justifyContent: window.innerWidth <= 480 ? 'center' : 'flex-start'
             }}>
               {['Always On Insights', 'Smart Recall', 'Emotional Intelligence', 'Growth Tracking'].map((text, index) => (
                 <p
@@ -1142,22 +1276,22 @@ export const HeroSection = () => {
                 </p>
               ))}
             </div>
-            <div style={{
+            <div className="image-container" style={{
               display: 'flex',
-              justifyContent: 'center',
+              justifyContent: window.innerWidth <= 480 ? 'center' : 'flex-start',
               alignItems: 'center',
-              margin: '1rem 0',
+              margin: window.innerWidth <= 480 ? '0 auto 1rem' : '0 0 1rem -8rem',
               maxWidth: '100%'
             }}>
               <img
-                src={RectangleImage}
+                src={Group686SVG}
                 alt="Rectangle"
                 style={{
                   width: 'min(100%, 1314px)',
-                  height: '600px',
+                  height: '900px',
                   maxHeight: '100vh',
                   flexShrink: 0,
-                  borderRadius: '50px',
+                  borderRadius: '25px',
                   border: '1px solid #CFCFAF',
                   objectFit: 'cover'
                 }}
@@ -1184,10 +1318,10 @@ export const HeroSection = () => {
                   fontWeight: 600,
                   lineHeight: '30px',
                   textAlign: 'left',
-                  margin: '0 0 1.5rem 0',
+                  margin: '0 0 1.5rem 0rem',
                   whiteSpace: 'pre-wrap'
                 }}>
-                  Understands you in Real-Time
+                  Help, Right When You Need It
                 </h2>
                 <p className="section-subtext" style={{
                   color: '#1E1E1E',
@@ -1197,10 +1331,10 @@ export const HeroSection = () => {
                   fontWeight: 400,
                   lineHeight: 'normal',
                   textAlign: 'left',
-                  margin: '0 0 1.5rem 0',
+                  margin: '0 0 1.5rem 0rem',
                   whiteSpace: 'pre-wrap'
                 }}>
-                  Clario listens, learns, and adapts to your needs as you interact keeping track of what matters to you without interrupting your flow.
+                  Clario spots what’s on your screen and drops help the moment you need it.
                 </p>
                 <img
                   className="section-image"
@@ -1211,7 +1345,7 @@ export const HeroSection = () => {
                     flexShrink: 0,
                     borderRadius: '25px',
                     objectFit: 'cover',
-                    display: 'block'
+                    display: 'block',
                   }}
                 />
               </div>
@@ -1228,10 +1362,10 @@ export const HeroSection = () => {
                   fontWeight: 600,
                   lineHeight: '30px',
                   textAlign: 'left',
-                  margin: '0 0 1.5rem 0',
+                  margin: '0 0 1.5rem 0rem',
                   whiteSpace: 'pre-wrap'
                 }}>
-                  Smart replies, shaped by you.
+                  Growth, One Chat at a Time
                 </h2>
                 <p className="section-subtext" style={{
                   color: '#1E1E1E',
@@ -1241,21 +1375,21 @@ export const HeroSection = () => {
                   fontWeight: 400,
                   lineHeight: 'normal',
                   textAlign: 'left',
-                  margin: '0 0 1.5rem 0',
+                  margin: '0 0 1.5rem 0rem',
                   whiteSpace: 'pre-wrap'
                 }}>
-                  Clario taps into your history, preferences, and vibe to give advice that feels like it’s coming from someone who actually gets you.
+                  It remembers your choices, gives weekly nudges, and chats with you on an emotional level.
                 </p>
                 <img
                   className="section-image"
-                  src={RecTangleImage}
+                  src={Product1SVG}
                   alt="Smart Replies"
                   style={{
                     height: 'clamp(200px, 60vw, 260px)',
                     flexShrink: 0,
                     borderRadius: '25px',
                     objectFit: 'cover',
-                    display: 'block'
+                    display: 'block',
                   }}
                 />
               </div>
@@ -1498,7 +1632,7 @@ export const HeroSection = () => {
             fontStyle: 'normal',
             fontWeight: 600,
             lineHeight: 'normal',
-            margin: 'clamp(2rem, 4vw, 4rem) auto 0',
+            margin: 'clamp(10rem, 4vw, 4rem) auto 0',
             maxWidth: '100%'
           }}>
             The insight you didn’t know you needed.
@@ -1566,7 +1700,7 @@ export const HeroSection = () => {
             justifyContent: 'center',
             alignItems: 'center',
             gap: 'clamp(0.5rem, 1vw, 1rem)',
-            marginTop: '2rem'
+            marginTop: '6rem'
           }}>
             <p className="chat-clario-text" style={{
               color: '#000',
@@ -1727,6 +1861,7 @@ export const HeroSection = () => {
               <p className="faq-answer" style={{
                 width: 'min(95%, 967px)',
                 color: '#1B263B',
+               
                 fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
                 fontStyle: 'normal',
                 fontWeight: 400,
@@ -1798,7 +1933,7 @@ export const HeroSection = () => {
               </p>
             )}
             <div style={{
-              marginTop: '10rem',
+              marginTop: '5rem',
               width: 'min(95%, 1150px)',
               marginLeft: 'auto',
               marginRight: 'auto'
