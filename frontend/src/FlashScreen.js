@@ -52,13 +52,67 @@ const FlashScreen = () => {
     }, 500);
   };
 
-  const handleNextSlide = () => {
-    if (currentSlide < 7) {
-      setCurrentSlide(currentSlide + 1);
-    } else {
+const handleSubmit = async () => {
+    const token = localStorage.getItem('token'); 
+    if (!token) {
+      console.error("Authentication token not found.");
+      return;
+    }
+
+    // NEW: Structure the answers according to the Clario Framework categories
+    const profileData = {
+      "Personal Facts": {
+        "name": email, // The 'email' state holds the user's name
+      },
+      "Core Values": selectedValues,
+      "Emotional History": {
+        "mental_health_experience": selectedMentalHealth,
+      },
+      "Personality Traits": {
+        "decision_making_style": selectedDecision,
+        "communication_style": selectedCommunication,
+      },
+      "Preferences": {
+        "ai_role_preference": selectedRole,
+        "topics_to_avoid": selectedTopics,
+      }
+    };
+    console.log("Submitting profile data:", profileData);
+    try {
+      // MODIFIED: The body now sends a nested profile_data object
+      const response = await fetch('http://localhost:8001/api/user/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ profile_data: profileData }), // The payload is nested
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('Profile updated successfully:', result);
+      
       handleNavigate();
+
+    } catch (error) {
+      console.error('Failed to submit user profile:', error);
     }
   };
+
+  const handleNextSlide = () => {
+    // MODIFIED: Check if it's the last slide
+    if (currentSlide < slides.length - 1) {
+      setCurrentSlide(currentSlide + 1);
+    } else {
+      // On the last slide, call the new submit function
+      handleSubmit();
+    }
+  };
+
 
   const ProgressBar = () => {
     const totalSlides = 7;

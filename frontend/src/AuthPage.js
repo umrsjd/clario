@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
@@ -27,33 +27,36 @@ const AuthPage = () => {
   const handleGoogleLogin = async () => {
     setIsLoadingGoogle(true);
     setError('');
-    console.log('Initiating Google OAuth login from AuthPage');
-    
+    console.log('Initiating Google OAuth login from HeroSection');
+
     try {
       const response = await axios.get(`${API}/auth/google/url`, {
         params: { redirect_uri: REDIRECT_URI }
       });
-  
+
+      // Handle both possible response structures
       let authUrl, state;
-      
+
       if (typeof response.data.url === 'string') {
+        // Simple structure: {url: string, state: string}
         authUrl = response.data.url;
         state = response.data.state;
       } else if (response.data.url && typeof response.data.url === 'object') {
+        // Nested structure: {url: {url: string, state: string, nonce: string}}
         authUrl = response.data.url.url;
         state = response.data.url.state;
       } else {
         throw new Error('Invalid response structure from backend');
       }
-  
+
       if (!authUrl) {
         throw new Error('No authorization URL returned from backend');
       }
-  
+
       console.log('Google OAuth URL:', authUrl);
       const urlParams = new URLSearchParams(new URL(authUrl).search);
       const extractedState = urlParams.get('state');
-      console.log('Generated state in AuthPage:', extractedState || state);
+      console.log('Generated state in HeroSection:', extractedState || state);
       window.location.href = authUrl;
     } catch (err) {
       console.error('Google OAuth URL error:', err);
@@ -108,9 +111,30 @@ const AuthPage = () => {
     }
   };
 
-  const handleContinue = () => {
-    navigate('/welcome');
+  const handleContinue = async () => {
+    // Re-check the user profile to ensure we have the latest data
+    if (token) {
+      try {
+        const meResponse = await axios.get(`${API}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const userData = meResponse.data;
+
+        if (userData.user_profile && Object.keys(userData.user_profile).length > 0) {
+          navigate('/dashboard');
+        } else {
+          navigate('/welcome');
+        }
+      } catch (err) {
+        console.error("Failed to verify user status, navigating to welcome.", err);
+        navigate('/welcome');
+      }
+    } else {
+      // If for some reason there's no token, go to the start
+      navigate('/');
+    }
   };
+
 
   const handleLogout = () => {
     logout();
@@ -133,8 +157,26 @@ const AuthPage = () => {
         email: email.trim(),
         code
       });
-      login(response.data.access_token);
-      navigate('/welcome');
+      const token = response.data.access_token;
+      login(token); // Set the token in context
+
+      // Check user profile before navigating
+      const meResponse = await axios.get(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const user = meResponse.data;
+
+      // Only set name if it doesn't exist in localStorage
+      if (user.full_name && !localStorage.getItem('userName')) {
+        localStorage.setItem('userName', user.full_name);
+      }
+
+      if (user.user_profile && Object.keys(user.user_profile).length > 0) {
+        navigate('/dashboard');
+      } else {
+        navigate('/welcome');
+      }
+
     } catch (err) {
       const errorMessage = err.response?.data?.detail || 'Invalid or expired verification code';
       setError(errorMessage);
@@ -567,6 +609,84 @@ const AuthPage = () => {
         </div>
       </section>
     </>
+  );
+};
+
+// Google OAuth Callback Component
+export const GoogleCallback = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [error, setError] = useState(null);
+  const requestSentRef = useRef(false);
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      if (requestSentRef.current) return;
+      requestSentRef.current = true;
+
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        if (!code) throw new Error('No authorization code found in URL');
+
+        const response = await axios.post(`${API}/auth/google`, { code });
+        const token = response.data.access_token;
+        login(token); // Set the token in context
+
+        // Check user profile before navigating
+        const meResponse = await axios.get(`${API}/auth/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const user = meResponse.data;
+
+        // Don't automatically set name from Google login
+        // User will set their preferred name in the welcome flow
+
+        if (user.user_profile && Object.keys(user.user_profile).length > 0) {
+          navigate('/dashboard');
+        } else {
+          navigate('/welcome');
+        }
+
+      } catch (error) {
+        const errorMessage = error.response?.data?.detail || error.message;
+        setError(errorMessage);
+        toast.error(`Authentication failed: ${errorMessage}`);
+        navigate('/');
+      }
+    };
+
+    handleCallback();
+  }, [navigate, login]);
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <ToastContainer />
+      <div style={{ textAlign: 'center' }}>
+        {error ? (
+          <p style={{ color: 'red' }}>Error: {error}</p>
+        ) : (
+          <>
+            <div style={{
+              animation: 'spin 1s linear infinite',
+              borderRadius: '50%',
+              height: '3rem',
+              width: '3rem',
+              border: '2px solid rgb(0, 0, 0)',
+              borderBottomColor: 'transparent',
+              margin: '0 auto 1rem'
+            }}></div>
+            <p style={{ color: 'rgb(75, 85, 99)' }}>Redirecting...</p>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 
