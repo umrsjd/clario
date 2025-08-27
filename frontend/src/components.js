@@ -22,7 +22,7 @@ import { ToastContainer, toast } from 'react-toastify';
 
 import IPSVG from './assets/svg ip.svg';
 import SectionSVG from './assets/clario section.svg';
-import HeroStyles from './HeroStyles';
+
 
 const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production';
 const BACKEND_URL = IS_PRODUCTION ? 'https://api.clario.co.in' : 'http://localhost:8001';
