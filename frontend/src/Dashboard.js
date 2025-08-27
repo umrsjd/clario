@@ -5,6 +5,11 @@ import Panel2SVG from './assets/panel2.svg';
 import Panel3SVG from './assets/panel3.svg';
 import ChatArrowSVG from './assets/chatarrow.svg';
 
+
+const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production';
+const BACKEND_URL = IS_PRODUCTION ? 'https://api.clario.co.in' : 'http://localhost:8001';
+const API = `${BACKEND_URL}/api`;
+
 const formatTimeAgo = (dateString) => {
     if (!dateString) return 'No messages yet';
     let date = new Date(dateString);
@@ -57,7 +62,7 @@ const Dashboard = () => {
         if (!token) return;
         const fetchInitialData = async () => {
             try {
-                const userResponse = await fetch('http://localhost:8001/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } });
+                const userResponse = await fetch(`${API}/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const userData = await userResponse.json();
                 setUserName(
                     userData.user_profile?.["Personal Facts"]?.name ||
@@ -67,7 +72,7 @@ const Dashboard = () => {
                 );
                 console.log("User data fetched:", userData);
 
-                const convResponse = await fetch('http://localhost:8001/api/chat/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
+                const convResponse = await fetch(`${API}/chat/conversations`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const convData = await convResponse.json();
                 setConversations(convData);
             } catch (error) {
@@ -106,7 +111,7 @@ const Dashboard = () => {
         setShowWelcomeText(false);
 
         try {
-            const response = await fetch(`http://localhost:8001/api/chat/conversations/${conversationId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const response = await fetch(`${API}/chat/conversations/${conversationId}`, { headers: { 'Authorization': `Bearer ${token}` } });
             if (!response.ok) throw new Error('Failed to fetch messages');
             const data = await response.json();
             setMessages(data.messages);
@@ -131,7 +136,7 @@ const Dashboard = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch('http://localhost:8001/api/chat/send', {
+            const response = await fetch(`${API}/chat/send`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ message: currentInput, conversation_id: activeConversationId }),
@@ -144,7 +149,7 @@ const Dashboard = () => {
 
             if (!activeConversationId) {
                 setActiveConversationId(data.conversation_id);
-                const convResponse = await fetch('http://localhost:8001/api/chat/conversations', { headers: { 'Authorization': `Bearer ${token}` } });
+                const convResponse = await fetch(`${API}/chat/conversations`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const convData = await convResponse.json();
                 setConversations(convData);
             }

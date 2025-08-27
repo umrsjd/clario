@@ -6,6 +6,10 @@ import firstIcon from './assets/first.png';
 import secondIcon from './assets/second.png';
 import thirdIcon from './assets/third.png';
 
+const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production';
+const BACKEND_URL = IS_PRODUCTION ? 'https://api.clario.co.in' : 'http://localhost:8001';
+const API = `${BACKEND_URL}/api`;
+
 const FlashScreen = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -79,8 +83,7 @@ const handleSubmit = async () => {
     };
     console.log("Submitting profile data:", profileData);
     try {
-      // MODIFIED: The body now sends a nested profile_data object
-      const response = await fetch('http://localhost:8001/api/user/profile', {
+      const response = await fetch(`${API}/user/profile`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
