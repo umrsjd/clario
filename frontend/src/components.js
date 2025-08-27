@@ -17,8 +17,8 @@ import GroupSVG from './assets/Group.svg';
 import Group583SVG from './assets/Group 583.svg';
 import Group686SVG from './assets/Group 686.svg';
 import Product1SVG from './assets/product 1.svg';
-import HeroStyles from './HeroStyles'; // New import for the styles and ToastContainer
-import { ToastContainer,toast} from 'react-toastify';
+import HeroStylesComponent from './HeroStyles'; // New import for the styles and ToastContainer
+import { ToastContainer, toast } from 'react-toastify';
 
 import IPSVG from './assets/svg ip.svg';
 import SectionSVG from './assets/clario section.svg';
@@ -194,7 +194,7 @@ export const HeroSection = () => {
 
   return (
     <>
-      <HeroStyles />
+      <HeroStylesComponent />
       <div className="gradient-background"></div>
       <section style={{
         padding: '0',
