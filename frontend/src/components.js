@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useContext, createContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { ToastContainer, toast } from 'react-toastify';
 import FourthSVG from './assets/fourth.svg';
 import FifthSVG from './assets/fifth.svg';
 import SixthSVG from './assets/six.svg';
@@ -16,12 +17,11 @@ import CanvaImage from './assets/canva.svg';
 import GroupSVG from './assets/Group.svg';
 import Group583SVG from './assets/Group 583.svg';
 import Group686SVG from './assets/Group 686.svg';
-import Product1SVG from './assets/product 1.svg';
-import HeroStylesComponent from './HeroStyles'; // New import for the styles and ToastContainer
-import { ToastContainer, toast } from 'react-toastify';
-
 import IPSVG from './assets/svg ip.svg';
 import SectionSVG from './assets/clario section.svg';
+import InstagramSVG from './assets/Instagram.svg';
+import GooGleSVG from './assets/goo_gle.svg';
+import HeroStyles from './HeroStyles';
 
 const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production';
 const BACKEND_URL = IS_PRODUCTION ? 'https://api.clario.co.in' : 'http://localhost:8001';
@@ -194,7 +194,7 @@ export const HeroSection = () => {
 
   return (
     <>
-      <HeroStylesComponent />
+      <HeroStyles />
       <div className="gradient-background"></div>
       <section style={{
         padding: '0',
@@ -361,11 +361,7 @@ export const HeroSection = () => {
                   </span>
                 </p>
               </div>
-              <img
-                src={Group583SVG}
-                alt="Group 583 Icon"
-                className="question-icon-right"
-              />
+              
             </div>
           </div>
           <div className="normal-background" style={{
@@ -375,8 +371,8 @@ export const HeroSection = () => {
             <p className="feature-section-p" style={{
               width: 'min(100%, 861.382px)',
               whiteSpace: 'pre-wrap',
-              textAlign: window.innerWidth <= 480 ? 'center' : 'left',
-              margin: window.innerWidth <= 480 ? '0 auto 1rem' : '0 0 1rem -8rem'
+              textAlign: 'left',
+              margin: '0 0 1rem 0'
             }}>
               <span style={{
                 color: '#3D74B6',
@@ -398,7 +394,19 @@ export const HeroSection = () => {
                 lineHeight: 'normal',
                 letterSpacing: '-1.04px'
               }}>
-                {' '}helps you make better choices by truly knowing you.
+                {' '}helps you make better choices
+              </span>
+              <br />
+              <span style={{
+                color: '#1E1E1E',
+                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                fontSize: 'clamp(36px, 6vw, 52px)',
+                fontStyle: 'normal',
+                fontWeight: 400,
+                lineHeight: 'normal',
+                letterSpacing: '-1.04px'
+              }}>
+                by truly knowing you.
               </span>
             </p>
             <div className="feature-text-container" style={{
@@ -406,9 +414,9 @@ export const HeroSection = () => {
               flexDirection: 'row',
               flexWrap: 'wrap',
               gap: 'clamp(0.2rem, 1vw, 0.5rem)',
-              textAlign: window.innerWidth <= 480 ? 'center' : 'left',
-              margin: window.innerWidth <= 480 ? '0 auto 1rem' : '0 0 1rem -8rem',
-              justifyContent: window.innerWidth <= 480 ? 'center' : 'flex-start'
+              textAlign: 'left',
+              margin: '0 0 1rem 0',
+              justifyContent: 'flex-start'
             }}>
               {['Always On Insights', 'Smart Recall', 'Emotional Intelligence', 'Growth Tracking'].map((text, index) => (
                 <p
@@ -432,9 +440,9 @@ export const HeroSection = () => {
             </div>
             <div className="image-container" style={{
               display: 'flex',
-              justifyContent: window.innerWidth <= 480 ? 'center' : 'flex-start',
+              justifyContent: 'flex-start',
               alignItems: 'center',
-              margin: window.innerWidth <= 480 ? '0 auto 1rem' : '0 0 1rem -8rem',
+              margin: '0 0 1rem 0',
               maxWidth: '100%'
             }}>
               <img
@@ -454,15 +462,16 @@ export const HeroSection = () => {
             <div className="new-sections-container" style={{
               display: 'flex',
               flexDirection: 'row',
-              flexWrap: 'wrap',
-              gap: 'clamp(1rem, 2vw, 2rem)',
+              flexWrap: 'nowrap',
+              gap: window.innerWidth <= 768 ? 'clamp(1rem, 2vw, 2rem)' : 'clamp(4rem, 5vw, 5rem)',
               alignItems: 'flex-start',
               margin: '10rem 0'
             }}>
               <div className="section-container" style={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'flex-start'
+                alignItems: 'flex-start',              
+                marginLeft: window.innerWidth > 768 ? '2rem' : '0'
               }}>
                 <h2 className="section-heading" style={{
                   color: '#000',
@@ -581,15 +590,15 @@ export const HeroSection = () => {
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              margin: '5rem 0',
+              margin: '2rem 0',
               maxWidth: '100%'
             }}>
               <img
                 src={PhoneImage1}
                 alt="Phone Image 1"
                 style={{
-                  width: '376px',
-                  height: '664px',
+                  width: '450px',
+                  height: '744px',
                   flexShrink: 0,
                   aspectRatio: '31/63',
                   objectFit: 'contain'
@@ -599,8 +608,8 @@ export const HeroSection = () => {
                 src={PhoneImage2}
                 alt="Phone Image 2"
                 style={{
-                  width: '376px',
-                  height: '664px',
+                  width: '450px',
+                  height: '744px',
                   flexShrink: 0,
                   aspectRatio: '31/63',
                   objectFit: 'contain'
@@ -610,8 +619,8 @@ export const HeroSection = () => {
                 src={PhoneImage3}
                 alt="Phone Image 3"
                 style={{
-                  width: '376px',
-                  height: '664px',
+                  width: '450px',
+                  height: '744px',
                   flexShrink: 0,
                   aspectRatio: '31/63',
                   objectFit: 'contain'
@@ -635,7 +644,7 @@ export const HeroSection = () => {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            alignItems: 'flex-start'
+            alignItems: 'center'
           }}>
             <div className="think-smarter-texts">
               <p className="think-smarter-text-first" style={{
@@ -643,7 +652,7 @@ export const HeroSection = () => {
                 fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
                 fontSize: 'clamp(32px, 6vw, 76px)',
                 fontStyle: 'normal',
-                fontWeight: 500,
+                fontWeight: 550,
                 lineHeight: 'normal',
                 letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
                 margin: '0 0 clamp(0.5rem, 1vw, 1rem) 0',
@@ -656,7 +665,7 @@ export const HeroSection = () => {
                 fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
                 fontSize: 'clamp(32px, 6vw, 76px)',
                 fontStyle: 'normal',
-                fontWeight: 500,
+                fontWeight: 550,
                 lineHeight: 'normal',
                 letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
                 margin: '0 0 clamp(0.5rem, 1vw, 1rem) 0',
@@ -669,7 +678,7 @@ export const HeroSection = () => {
                 fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
                 fontSize: 'clamp(32px, 6vw, 76px)',
                 fontStyle: 'normal',
-                fontWeight: 500,
+                fontWeight: 550,
                 lineHeight: 'normal',
                 letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
                 margin: '0 0 clamp(0.5rem, 1vw, 1rem) 0',
@@ -682,7 +691,7 @@ export const HeroSection = () => {
                 fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
                 fontSize: 'clamp(32px, 6vw, 76px)',
                 fontStyle: 'normal',
-                fontWeight: 500,
+                fontWeight: 550,
                 lineHeight: 'normal',
                 letterSpacing: 'clamp(-1.28px, -0.3vw, -3.84px)',
                 margin: '0',
@@ -918,251 +927,239 @@ export const HeroSection = () => {
             margin: '0 auto',
             display: 'flex',
             flexDirection: 'column',
-            gap: '2rem',
+            gap: '0',
             alignItems: 'center'
           }}>
-            <div className="faq-container" style={{
-              width: 'min(100%, 967px)',
-              height: '80px',
-              flexShrink: 0,
-              borderRadius: '15px',
-              border: '2px solid #E2EFFF',
-              background: '#FEFEFF',
-              boxShadow: '0 4px 24px 0 rgba(0, 0, 0, 0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0 1.5rem',
-              margin: '0 auto'
-            }}>
-              <h3 className="faq-question" style={{
-                color: '#1B263B',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '24px',
-                fontStyle: 'normal',
-                fontWeight: 100,
-                lineHeight: 'normal',
-                WebkitTextStrokeWidth: '0.5px',
-                WebkitTextStrokeColor: '#1B263B',
-                flex: 1
-              }}>
-                What is Clario and how does it work?
-              </h3>
-              <button onClick={() => toggleDropdown(4)} style={{
-                color: '#999',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: 'clamp(20px, 4vw, 36px)',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                lineHeight: 'normal'
-              }}>
-                {openDropdown === 4 ? '−' : '+'}
-              </button>
+            <div className="faq-item">
+              <div className="faq-question-container">
+                <h3 className="faq-question" style={{
+                  color: '#1B263B',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '24px',
+                  fontStyle: 'normal',
+                  fontWeight: 100,
+                  lineHeight: 'normal',
+                  WebkitTextStrokeWidth: '0.5px',
+                  WebkitTextStrokeColor: '#1B263B',
+                  flex: 1
+                }}>
+                  What is Clario and how does it work?
+                </h3>
+                <button onClick={() => toggleDropdown(4)} style={{
+                  color: '#999',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: 'clamp(20px, 4vw, 36px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal'
+                }}>
+                  {openDropdown === 4 ? '−' : '+'}
+                </button>
+              </div>
+              {openDropdown !== 4 && <div className="faq-stroke" />}
+              {openDropdown === 4 && (
+                <p className={`faq-answer ${openDropdown === 4 ? 'open' : ''}`} style={{
+                  width: 'min(95%, 967px)',
+                  color: '#1B263B',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  textAlign: 'left',
+                  wordWrap: 'break-word',
+                  padding: '0 1.5rem',
+                  margin: '0.5rem auto 0',
+                  maxWidth: '967px',
+                  transition: 'max-height 0.3s ease-in-out'
+                }}>
+                  Clario is your AI powered emotional companion, it remembers, learns, and grows with you. It helps you reflect, feel heard, and move forward with gentle clarity.
+                </p>
+              )}
+              {openDropdown === 4 && <div className="faq-stroke" />}
             </div>
-            {openDropdown === 4 && (
-              <p className={`faq-answer ${openDropdown === 4 ? 'open' : ''}`} style={{
-                width: 'min(95%, 967px)',
-                color: '#1B263B',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                lineHeight: 'normal',
-                textAlign: 'left',
-                wordWrap: 'break-word',
-                padding: '0 1.5rem',
-                margin: '0.5rem auto 0',
-                maxWidth: '967px',
-                transition: 'max-height 0.3s ease-in-out'
-              }}>
-                Clario is your AI powered emotional companion, it remembers, learns, and grows with you. It helps you reflect, feel heard, and move forward with gentle clarity.
-              </p>
-            )}
-            <div className="faq-container" style={{
-              width: 'min(100%, 967px)',
-              height: '80px',
-              flexShrink: 0,
-              borderRadius: '15px',
-              border: '2px solid #E2EFFF',
-              background: '#FEFEFF',
-              boxShadow: '0 4px 24px 0 rgba(0, 0, 0, 0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0 1.5rem',
-              margin: '2rem auto 0'
-            }}>
-              <h3 className="faq-question" style={{
-                color: '#1B263B',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '24px',
-                fontStyle: 'normal',
-                fontWeight: 100,
-                lineHeight: 'normal',
-                WebkitTextStrokeWidth: '0.5px',
-                WebkitTextStrokeColor: '#1B263B',
-                flex: 1
-              }}>
-                What should I use Clario for?
-              </h3>
-              <button onClick={() => toggleDropdown(5)} style={{
-                color: '#999',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: 'clamp(20px, 4vw, 36px)',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                lineHeight: 'normal'
-              }}>
-                {openDropdown === 5 ? '−' : '+'}
-              </button>
+            <div className="faq-item">
+              <div className="faq-question-container">
+                <h3 className="faq-question" style={{
+                  color: '#1B263B',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '24px',
+                  fontStyle: 'normal',
+                  fontWeight: 100,
+                  lineHeight: 'normal',
+                  WebkitTextStrokeWidth: '0.5px',
+                  WebkitTextStrokeColor: '#1B263B',
+                  flex: 1
+                }}>
+                  What should I use Clario for?
+                </h3>
+                <button onClick={() => toggleDropdown(5)} style={{
+                  color: '#999',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: 'clamp(20px, 4vw, 36px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal'
+                }}>
+                  {openDropdown === 5 ? '−' : '+'}
+                </button>
+              </div>
+              {openDropdown !== 5 && <div className="faq-stroke" />}
+              {openDropdown === 5 && (
+                <p className={`faq-answer ${openDropdown === 5 ? 'open' : ''}`} style={{
+                  width: 'min(95%, 967px)',
+                  color: '#1B263B',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  textAlign: 'left',
+                  wordWrap: 'break-word',
+                  padding: '0 1.5rem',
+                  margin: '0.5rem auto 0',
+                  maxWidth: '967px',
+                  transition: 'max-height 0.3s ease-in-out'
+                }}>
+                  Whether you’re thinking through life, venting emotions, or needing perspective, Clario listens. It’s built to support your mental and emotional growth, anytime you need.
+                </p>
+              )}
+              {openDropdown === 5 && <div className="faq-stroke" />}
             </div>
-            {openDropdown === 5 && (
-              <p className={`faq-answer ${openDropdown === 5 ? 'open' : ''}`} style={{
-                width: 'min(95%, 967px)',
-                color: '#1B263B',
-               
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                lineHeight: 'normal',
-                textAlign: 'left',
-                wordWrap: 'break-word',
-                padding: '0 1.5rem',
-                margin: '0.5rem auto 0',
-                maxWidth: '967px',
-                transition: 'max-height 0.3s ease-in-out'
-              }}>
-                Whether you’re thinking through life, venting emotions, or needing perspective, Clario listens. It’s built to support your mental and emotional growth, anytime you need.
-              </p>
-            )}
-            <div className="faq-container" style={{
-              width: 'min(100%, 967px)',
-              height: '80px',
-              flexShrink: 0,
-              borderRadius: '15px',
-              border: '2px solid #E2EFFF',
-              background: '#FEFEFF',
-              boxShadow: '0 4px 24px 0 rgba(0, 0, 0, 0.05)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '0 1.5rem',
-              margin: '2rem auto 0'
-            }}>
-              <h3 className="faq-question" style={{
-                color: '#1B263B',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: '24px',
-                fontStyle: 'normal',
-                fontWeight: 100,
-                lineHeight: 'normal',
-                WebkitTextStrokeWidth: '0.5px',
-                WebkitTextStrokeColor: '#1B263B',
-                flex: 1
-              }}>
-                How much does it cost to use?
-              </h3>
-              <button onClick={() => toggleDropdown(6)} style={{
-                color: '#999',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontSize: 'clamp(20px, 4vw, 36px)',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                lineHeight: 'normal'
-              }}>
-                {openDropdown === 6 ? '−' : '+'}
-              </button>
+            <div className="faq-item">
+              <div className="faq-question-container">
+                <h3 className="faq-question" style={{
+                  color: '#1B263B',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: '24px',
+                  fontStyle: 'normal',
+                  fontWeight: 100,
+                  lineHeight: 'normal',
+                  WebkitTextStrokeWidth: '0.5px',
+                  WebkitTextStrokeColor: '#1B263B',
+                  flex: 1
+                }}>
+                  How much does it cost to use?
+                </h3>
+                <button onClick={() => toggleDropdown(6)} style={{
+                  color: '#999',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontSize: 'clamp(20px, 4vw, 36px)',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal'
+                }}>
+                  {openDropdown === 6 ? '−' : '+'}
+                </button>
+              </div>
+              {openDropdown !== 6 && <div className="faq-stroke" />}
+              {openDropdown === 6 && (
+                <p className={`faq-answer ${openDropdown === 6 ? 'open' : ''}`} style={{
+                  width: 'min(95%, 967px)',
+                  color: '#1B263B',
+                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                  fontStyle: 'normal',
+                  fontWeight: 400,
+                  lineHeight: 'normal',
+                  textAlign: 'left',
+                  wordWrap: 'break-word',
+                  padding: '0 1.5rem',
+                  margin: '0.5rem auto 0',
+                  maxWidth: '967px',
+                  transition: 'max-height 0.3s ease-in-out'
+                }}>
+                  Clario is completely free right now. No hidden fees. Just real conversations, whenever you need them.
+                </p>
+              )}
+              {openDropdown === 6 && <div className="faq-stroke" />}
             </div>
-            {openDropdown === 6 && (
-              <p className={`faq-answer ${openDropdown === 6 ? 'open' : ''}`} style={{
-                width: 'min(95%, 967px)',
-                color: '#1B263B',
-                fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                fontStyle: 'normal',
-                fontWeight: 400,
-                lineHeight: 'normal',
-                textAlign: 'left',
-                wordWrap: 'break-word',
-                padding: '0 1.5rem',
-                margin: '0.5rem auto 0',
-                maxWidth: '967px',
-                transition: 'max-height 0.3s ease-in-out'
-              }}>
-                Clario is completely free right now. No hidden fees. Just real conversations, whenever you need them.
-              </p>
-            )}
             <div style={{
               marginTop: '5rem',
               width: 'min(95%, 1150px)',
               marginLeft: 'auto',
               marginRight: 'auto'
             }}>
-              <div className="chat-clario-footer-container" style={{
+              <div style={{
                 display: 'flex',
-                flexDirection: window.innerWidth <= 480 ? 'column' : 'column',
+                justifyContent: 'space-between',
                 alignItems: 'flex-start',
-                gap: 'clamp(0.5rem, 1.5vw, 1rem)',
-                marginTop: '3rem'
+                width: '100%'
               }}>
-                <p className="personal-intelligence-text" style={{
-                  color: '#000',
-                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: 'clamp(36px, 8vw, 72px)',
-                  fontStyle: 'normal',
-                  fontWeight: 500,
-                  lineHeight: 'normal',
-                  letterSpacing: 'clamp(-1.44px, -0.3vw, -2.88px)',
-                  textAlign: 'left',
-                  width: 'min(100%, clamp(400px, 80vw, 877px))',
-                  margin: 0
-                }}>
-                  Your Personal Intelligence,<br />Ready Anytime.
-                </p>
-                <div style={{
+                <div className="chat-clario-footer-container" style={{
                   display: 'flex',
-                  alignItems: 'center',
-                  gap: 'clamp(0.5rem, 1.5vw, 1rem)'
+                  flexDirection: window.innerWidth <= 480 ? 'column' : 'column',
+                  alignItems: 'flex-start',
+                  gap: 'clamp(0.5rem, 1.5vw, 1rem)',
+                  marginTop: '3rem'
                 }}>
-                  <p style={{
-                    color: '#3D74B6',
+                  <p className="personal-intelligence-text" style={{
+                    color: '#000',
                     fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                    fontSize: 'clamp(20px, 5vw, 28px)',
+                    fontSize: 'clamp(36px, 8vw, 72px)',
                     fontStyle: 'normal',
                     fontWeight: 500,
                     lineHeight: 'normal',
+                    letterSpacing: 'clamp(-1.44px, -0.3vw, -2.88px)',
+                    textAlign: 'left',
+                    width: 'min(100%, clamp(400px, 80vw, 877px))',
                     margin: 0
                   }}>
-                    Chat with Clario
+                    Your Personal Intelligence,<br />Ready Anytime.
                   </p>
-                  <button style={{
-                    display: 'inline-flex',
-                    height: 'clamp(36px, 8vw, 48px)',
-                    padding: 'clamp(10px, 2.5vw, 14.2px) clamp(24px, 5vw, 37.867px)',
-                    justifyContent: 'center',
+                  <div style={{
+                    display: 'flex',
                     alignItems: 'center',
-                    gap: 'clamp(8px, 2vw, 11.833px)',
-                    flexShrink: 0,
-                    borderRadius: 'clamp(40px, 10vw, 59.167px)',
-                    border: '0.5px solid #9F9F9F',
-                    background: '#3D74B6'
+                    gap: 'clamp(0.5rem, 1.5vw, 1rem)'
                   }}>
-                    <span style={{
-                      color: '#FFF',
+                    <p style={{
+                      color: '#3D74B6',
                       fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                      fontSize: 'clamp(18px, 4vw, 26px)',
+                      fontSize: 'clamp(20px, 5vw, 28px)',
                       fontStyle: 'normal',
-                      fontWeight: 600,
-                      lineHeight: 'normal'
+                      fontWeight: 500,
+                      lineHeight: 'normal',
+                      margin: 0
                     }}>
-                      vO1 Beta
-                    </span>
-                  </button>
+                      Chat with Clario
+                    </p>
+                    <button style={{
+                      display: 'inline-flex',
+                      height: 'clamp(36px, 8vw, 48px)',
+                      padding: 'clamp(10px, 2.5vw, 14.2px) clamp(24px, 5vw, 37.867px)',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      gap: 'clamp(8px, 2vw, 11.833px)',
+                      flexShrink: 0,
+                      borderRadius: 'clamp(40px, 10vw, 59.167px)',
+                      border: '0.5px solid #9F9F9F',
+                      background: '#3D74B6'
+                    }}>
+                      <span style={{
+                        color: '#FFF',
+                        fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
+                        fontSize: 'clamp(18px, 4vw, 26px)',
+                        fontStyle: 'normal',
+                        fontWeight: 600,
+                        lineHeight: 'normal'
+                      }}>
+                        vO1 Beta
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-end',
+                  gap: 'clamp(-2remrem, 2vw, 2rem)'
+                }}>
+                  <img src={InstagramSVG} alt="Instagram" style={{ width: '186.479px', height: '206.479px' }} />
+                  <img src={GooGleSVG} alt="Google" style={{ width: '306.479px', height: '206.479px' }} />
                 </div>
               </div>
               <div style={{
                 width: 'min(100%, clamp(600px, 90vw, 1312.006px))',
                 height: '0.5px',
                 background: '#9F9F9F',
-                margin: '5rem auto 0'
+                margin: '2rem auto 0'
               }}></div>
               <div style={{
                 display: 'flex',

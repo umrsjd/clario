@@ -2,6 +2,7 @@
   "dependencies": {
     "@craco/craco": "^7.1.0",
     "@react-oauth/google": "^0.12.2",
+    "react-markdown": "^10.1.0",
     "react-scripts": "^5.0.1"
   }
 }

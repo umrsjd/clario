@@ -1,3 +1,4 @@
+// HeroStyles.js
 import React from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,11 +24,28 @@ const HeroStyles = () => {
             max-height: 0;
             opacity: 0;
             overflow: hidden;
-            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out, margin 0.3s ease-in-out;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out, margin 0.5s ease-in-out;
           }
           .faq-answer.open {
             max-height: 500px;
             opacity: 1;
+          }
+          .faq-item {
+            width: min(100%, 967px);
+            margin: 0 auto;
+          }
+          .faq-question-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.5rem;
+            margin: 0 auto;
+          }
+          .faq-stroke {
+            width: min(100%, 1012.02px);
+            height: 2px;
+            background: #999;
+            margin: 0.5rem auto;
           }
           @media (max-width: 480px) {
             .feature-text-container {
@@ -77,6 +95,9 @@ const HeroStyles = () => {
               left: 0;
               right: 0;
               box-sizing: border-box;
+            }
+            .think-smarter-texts {
+              text-align: left;
             }
             .think-smarter-text-first {
               font-size: clamp(24px, 6vw, 32px);
@@ -189,12 +210,13 @@ const HeroStyles = () => {
               font-size: clamp(24px, 6vw, 32px);
               -webkit-text-stroke-width: 0.5px;
             }
-            .faq-container {
+            .faq-item {
               width: 100%;
               max-width: clamp(300px, 90vw, 400px);
-              height: clamp(60px, 15vw, 80px);
-              border-radius: clamp(10px, 2vw, 12px);
               margin: clamp(1rem, 2vw, 1.5rem) auto 0;
+            }
+            .faq-question-container {
+              padding: 0 clamp(0.5rem, 2vw, 1rem);
             }
             .faq-question {
               font-size: clamp(16px, 4vw, 20px);
@@ -204,6 +226,13 @@ const HeroStyles = () => {
               font-size: clamp(12px, 3vw, 16px);
               margin: 0.5rem auto 0;
               max-width: clamp(300px, 90vw, 400px);
+              padding: 0 clamp(0.5rem, 2vw, 1rem);
+            }
+            .faq-stroke {
+              width: min(100%, 1012.02px);
+              height: 2px;
+              background: #999;
+              margin: clamp(0.5rem, 1vw, 1rem) auto;
             }
             .personal-intelligence-text {
               font-size: clamp(24px, 8vw, 36px);
@@ -309,16 +338,16 @@ const HeroStyles = () => {
             }
             .feature-section-p {
               width: 100%;
-              margin: 0 auto;
-              text-align: center;
+              margin: 0 0 1rem 0;
+              text-align: left;
             }
             .feature-text-container {
               width: 100%;
-              margin: 0 auto;
-              justify-content: center;
+              margin: 0 0 1rem 0;
+              justify-content: flex-start;
             }
             .image-container {
-              justify-content: center;
+              justify-content: flex-start;
             }
             .image-container img {
               width: 100%;
@@ -337,19 +366,16 @@ const HeroStyles = () => {
               gap: clamp(0.2rem, 1vw, 0.5rem);
               width: min(100%, 861.382px);
               justify-content: flex-start;
-              margin-left: 0;
-              margin-right: auto;
+              margin: 0 0 1rem 0;
             }
             .feature-section-p {
               width: min(100%, 861.382px);
               text-align: left;
-              margin-left: 0;
-              margin-right: auto;
+              margin: 0 0 1rem 0;
             }
             .image-container {
               justify-content: flex-start;
-              margin-left: 0;
-              margin-right: auto;
+              margin: 0 0 1rem 0;
             }
             .image-container img {
               width: min(100%, 1314px);
@@ -387,12 +413,12 @@ const HeroStyles = () => {
             .phone-images-container {
               flex-direction: row;
               flex-wrap: nowrap;
-              gap: clamp(3rem, 6vw, 6rem);
+              gap: clamp(0.3rem, 2vw, 2rem);
               justify-content: center;
             }
             .phone-images-container img {
-              width: 376px;
-              height: 664px;
+              width: 386px;
+              height: 744px;
               flex-shrink: 0;
               aspect-ratio: 31/63;
               object-fit: contain;
@@ -406,6 +432,11 @@ const HeroStyles = () => {
               left: 0;
               right: 0;
               box-sizing: border-box;
+            }
+            .think-smarter-texts {
+              text-align: left;
+              max-width: 80%;
+              margin: 0 auto;
             }
             .think-smarter-text-first {
               font-size: clamp(32px, 6vw, 76px);
@@ -511,11 +542,12 @@ const HeroStyles = () => {
               font-size: clamp(32px, 6vw, 52px);
               -webkit-text-stroke-width: 1px;
             }
-            .faq-container {
+            .faq-item {
               width: min(100%, clamp(600px, 80vw, 967px));
-              height: clamp(60px, 10vw, 80px);
-              border-radius: clamp(12px, 2vw, 15px);
               margin: clamp(1.5rem, 3vw, 2rem) auto 0;
+            }
+            .faq-question-container {
+              padding: 0 clamp(1rem, 2vw, 1.5rem);
             }
             .faq-question {
               font-size: clamp(18px, 3vw, 24px);
@@ -525,6 +557,13 @@ const HeroStyles = () => {
               font-size: clamp(14px, 2.5vw, 20px);
               margin: 0.5rem auto 0;
               max-width: clamp(600px, 80vw, 967px);
+              padding: 0 clamp(1rem, 2vw, 1.5rem);
+            }
+            .faq-stroke {
+              width: min(100%, 1012.02px);
+              height: 2px;
+              background: #999;
+              margin: clamp(0.5rem, 1vw, 1rem) auto;
             }
             .personal-intelligence-text {
               font-size: clamp(36px, 8vw, 72px);
@@ -636,19 +675,16 @@ const HeroStyles = () => {
               gap: clamp(0.2rem, 1vw, 0.5rem);
               width: min(100%, 861.382px);
               justify-content: flex-start;
-              margin-left: 0;
-              margin-right: auto;
+              margin: 0 0 1rem 0;
             }
             .feature-section-p {
               width: min(100%, 861.382px);
               text-align: left;
-              margin-left: 0;
-              margin-right: auto;
+              margin: 0 0 1rem 0;
             }
             .image-container {
               justify-content: flex-start;
-              margin-left: 0;
-              margin-right: auto;
+              margin: 0 0 1rem 0;
             }
             .image-container img {
               width: min(100%, 1314px);
@@ -661,12 +697,12 @@ const HeroStyles = () => {
             .phone-images-container {
               flex-direction: row;
               flex-wrap: nowrap;
-              gap: clamp(3rem, 6vw, 6rem);
+              gap: clamp(0.3rem, 2vw, 2rem);
               justify-content: center;
             }
             .phone-images-container img {
-              width: 376px;
-              height: 664px;
+              width: 386px;
+              height: 744px;
               flex-shrink: 0;
               aspect-ratio: 31/63;
               object-fit: contain;
@@ -682,16 +718,19 @@ const HeroStyles = () => {
               box-sizing: border-box;
             }
             .think-smarter-texts {
-              margin-left: 14rem;
-              margin-right: 2rem;
+              text-align: left;
+              max-width: 80%;
+              margin: 0 auto;
             }
             .think-smarter-text-first {
-              font-size: clamp(32px, 6vw, 76px);
+              font-size: clamp(34px, 6vw, 78px);
+              font-weight: 530;
               letter-spacing: clamp(-1.28px, -0.3vw, -3.84px);
               white-space: nowrap;
             }
             .think-smarter-text-rest {
-              font-size: clamp(32px, 6vw, 76px);
+              font-size: clamp(34px, 6vw, 78px);
+              font-weight: 530;
               letter-spacing: clamp(-1.28px, -0.3vw, -3.84px);
               white-space: nowrap;
             }
@@ -700,7 +739,7 @@ const HeroStyles = () => {
               height: 750px;
               border-radius: 50px;
               background: #E2EFFF;
-              margin: clamp(2rem, 5vw, 4rem) auto 0;
+              margin: 4rem auto 0;
               padding: clamp(1rem, 2.5vw, 2rem);
             }
             .new-text-container {
@@ -789,11 +828,12 @@ const HeroStyles = () => {
               font-size: 52px;
               -webkit-text-stroke-width: 1px;
             }
-            .faq-container {
+            .faq-item {
               width: min(100%, 967px);
-              height: 80px;
-              border-radius: 15px;
               margin: clamp(1.5rem, 3vw, 2rem) auto 0;
+            }
+            .faq-question-container {
+              padding: 0 1.5rem;
             }
             .faq-question {
               font-size: 24px;
@@ -803,6 +843,13 @@ const HeroStyles = () => {
               font-size: 20px;
               margin: 0.5rem auto 0;
               max-width: 967px;
+              padding: 0 1.5rem;
+            }
+            .faq-stroke {
+              width: min(100%, 1012.02px);
+              height: 2px;
+              background: #999;
+              margin: clamp(0.5rem, 1vw, 1rem) auto;
             }
             .personal-intelligence-text {
               font-size: 72px;
