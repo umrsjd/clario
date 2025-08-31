@@ -1608,42 +1608,58 @@ export const GoogleCallback = () => {
   const requestSentRef = useRef(false);
 
   useEffect(() => {
-    const handleCallback = async () => {
-      if (requestSentRef.current) {
-        console.log('Request already sent, skipping');
-        return;
+  const handleCallback = async () => {
+    if (requestSentRef.current) {
+      console.log('Request already sent, skipping');
+      return;
+    }
+    requestSentRef.current = true;
+    console.log('Starting Google OAuth callback handling');
+
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const state = urlParams.get('state');
+      if (!code) {
+        throw new Error('No authorization code found in URL');
       }
-      requestSentRef.current = true;
-      console.log('Starting Google OAuth callback handling');
 
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const state = urlParams.get('state');
-        if (!code) {
-          throw new Error('No authorization code found in URL');
-        }
+      console.log('Google Callback URL:', window.location.href);
+      console.log('Sending authorization code:', code, 'State:', state);
+      const response = await axios.post(`${API}/auth/google`, { code });
+      const token = response.data.access_token;
+      login(token);
 
-        console.log('Google Callback URL:', window.location.href);
-        console.log('Sending authorization code:', code, 'State:', state);
-        const response = await axios.post(`${API}/auth/google`, { code });
-        login(response.data.access_token);
+      // Check user profile before navigating
+      const meResponse = await axios.get(`${API}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const user = meResponse.data;
+
+      // Don't automatically set name from Google login
+      // User will set their preferred name in the welcome flow
+
+      if (user.user_profile && Object.keys(user.user_profile).length > 0) {
+        navigate('/dashboard');
+      } else {
         navigate('/welcome');
-      } catch (error) {
-        const errorMessage = error.response?.data?.detail || error.message;
-        console.error('Google OAuth callback error:', errorMessage, error);
-        setError(errorMessage);
-        toast.error(`Authentication failed: ${errorMessage}`);
-        navigate('/');
       }
-    };
+    } catch (error) {
+      const errorMessage = error.response?.data?.detail || error.message;
+      console.error('Google OAuth callback error:', errorMessage, error);
+      setError(errorMessage);
+      toast.error(`Authentication failed: ${errorMessage}`);
+      navigate('/');
+    }
+  };
 
-    handleCallback();
+  handleCallback();
 
-    return () => {
-      console.log('Cleaning up GoogleCallback useEffect');
-    };
-  }, [navigate, login]);
+  return () => {
+    console.log('Cleaning up GoogleCallback useEffect');
+  };
+}, [navigate, login]);
 
   return (
     <div style={{

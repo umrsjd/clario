@@ -127,7 +127,7 @@ const AuthPage = () => {
         }
       } catch (err) {
         console.error("Failed to verify user status, navigating to welcome.", err);
-        navigate('/welcome');
+        navigate('/');
       }
     } else {
       // If for some reason there's no token, go to the start
@@ -653,7 +653,7 @@ export const GoogleCallback = () => {
         const errorMessage = error.response?.data?.detail || error.message;
         setError(errorMessage);
         toast.error(`Authentication failed: ${errorMessage}`);
-        navigate('/');
+        navigate('/welcome');
       }
     };
 
