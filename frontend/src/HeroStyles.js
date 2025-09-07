@@ -47,6 +47,53 @@ const HeroStyles = () => {
             background: #999;
             margin: 0.5rem auto;
           }
+          .new-sections-container {
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: min(90%, 1150px);
+            margin: clamp(2rem, 4vw, 4rem) auto;
+            gap: clamp(6rem, 10vw, 10rem); /* Increased gap between sections */
+          }
+          .section-container {
+            width: min(45%, 516px);
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+          }
+          .section-heading {
+            width: min(100%, clamp(300px, 100%, 442px));
+            color: #000;
+            font-family: "SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: clamp(24px, 4vw, 32px);
+            font-style: normal;
+            font-weight: 600;
+            line-height: clamp(24px, 4vw, 30px);
+            margin: 0;
+          }
+          .section-subtext {
+            width: min(100%, clamp(300px, 100%, 816px));
+            color: #1E1E1E;
+            font-family: "SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: clamp(16px, 3vw, 24px);
+            font-style: normal;
+            font-weight: 400;
+            line-height: normal;
+            margin-top: clamp(16px, 3vw, 32px);
+            word-break: break-word;
+            overflow-wrap: break-word;
+          }
+          .section-image {
+            width: min(100%, clamp(300px, 100%, 516px));
+            height: auto;
+            flex-shrink: 0;
+            border-radius: 25px;
+            margin-top: clamp(15px, 3vw, 30px);
+            object-fit: contain;
+          }
           @media (max-width: 480px) {
             .feature-text-container {
               gap: 0.8rem;
@@ -513,7 +560,7 @@ const HeroStyles = () => {
             }
             .learn-patterns-text {
               font-size: clamp(20px, 3vw, 24px);
-              width: min(100%, 820px);
+              width: min(100%, 840px);
             }
             .coming-soon-button {
               width: 260px;
@@ -799,7 +846,7 @@ const HeroStyles = () => {
             }
             .learn-patterns-text {
               font-size: 24px;
-              width: 820px;
+              width: 840px;
             }
             .coming-soon-button {
               width: 260px;
