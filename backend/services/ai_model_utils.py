@@ -7,6 +7,25 @@ from .config import logger, openai_client
 from .fallback_utils import generate_contextual_fallback, create_pattern_based_fallback
 import os
 
+safety_settings = [
+    {
+        "category": "HARM_CATEGORY_HARASSMENT",
+        "threshold": "BLOCK_ONLY_HIGH"  # Instead of BLOCK_NONE
+    },
+    {
+        "category": "HARM_CATEGORY_HATE_SPEECH", 
+        "threshold": "BLOCK_ONLY_HIGH"
+    },
+    {
+        "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        "threshold": "BLOCK_ONLY_HIGH"
+    },
+    {
+        "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+        "threshold": "BLOCK_ONLY_HIGH"
+    }
+]
+
 # --- AI Model Utilities with Fallback ---
 async def call_ai_model_with_fallback(prompt: str, max_retries: int = 2) -> str:
     """Calls Gemini first, then falls back to OpenAI with better error handling."""
@@ -27,7 +46,8 @@ async def call_ai_model_with_fallback(prompt: str, max_retries: int = 2) -> str:
             
             response = await model.generate_content_async(
                 prompt, 
-                generation_config=generation_config
+                generation_config=generation_config,
+                safety_settings=safety_settings
             )
             
             # Better response validation
@@ -105,8 +125,9 @@ async def call_ai_for_json_with_fallback(prompt: str, max_retries: int = 2) -> D
             )
             
             response = await model.generate_content_async(
-                prompt,
-                generation_config=generation_config
+                prompt, 
+                generation_config=generation_config,
+                safety_settings=safety_settings
             )
             
             if not response.text:
