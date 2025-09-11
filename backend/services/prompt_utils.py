@@ -1,97 +1,57 @@
 from typing import List, Dict, Any
 
 def construct_enhanced_prompt(
-    user_query: str, 
-    sentiment: str, 
-    relevant_memories: List[Dict[str, Any]], 
+    user_query: str,
+    sentiment: str,
+    relevant_memories: List[Dict[str, Any]],
     user_profile: Dict[str, Any],
     chat_history: List[Any],
     has_memories: bool = False
 ) -> str:
-    """Enhanced prompt construction with better fallback handling."""
-    
-    # Get user name
-    user_name = user_profile.get('name', user_profile.get('user_name', user_profile.get('full_name', '')))
-    
-    # Build conversation context
-    conversation_context = ""
-    if chat_history and len(chat_history) > 1:
-        conversation_context = "RECENT CONVERSATION:\n"
-        for msg in chat_history[-4:]:
-            role_label = "User" if msg.role == "user" else "You"
-            conversation_context += f"{role_label}: {msg.content}\n"
-        conversation_context += "\n"
-    
-    # Build memory context from vector memories
+    """
+    Constructs a robust prompt that distinguishes between memory and current context.
+    """
+
+    # 1. Define the AI's persona and core instructions
+    system_instruction = """You are Clario, an empathetic and supportive AI companion. Your goal is to be a great listener.
+
+**Your Core Rules:**
+1.  **Be Present:** Respond ONLY to the user's most recent message.
+2.  **Use Your Memory:** You have access to long-term memories. Use them to show you remember details from past conversations.
+3.  **Don't State the Obvious:** If the user just told you something, don't say "I remember you mentioned..." or "You just said...". Instead, use the information to ask a follow-up question.
+4.  **Be Natural and Brief:** Keep your tone calm and your responses short (1-3 sentences)."""
+
+    # 2. Build the context from long-term memories
+    # We exclude memories created from the immediate past few messages to avoid this loop.
     memory_context = ""
     if has_memories and relevant_memories:
-        memory_context = "WHAT YOU REMEMBER ABOUT THE USER:\n"
-        
-        # Group memories by type
-        memory_types = {}
-        for memory in relevant_memories[:8]:  # Top 8 most relevant
-            mem_type = memory['metadata'].get('type', 'other')
-            if mem_type not in memory_types:
-                memory_types[mem_type] = []
-            memory_types[mem_type].append(memory)
-        
-        # Add relationships first (highest priority)
-        if 'people' in memory_types or 'relationship' in memory_types:
-            memory_context += "People in their life:\n"
-            people_memories = memory_types.get('people', []) + memory_types.get('relationship', [])
-            for memory in people_memories[:3]:
-                memory_context += f"• {memory['content']}\n"
-        
-        # Add facts
-        if 'fact' in memory_types:
-            memory_context += "Facts about them:\n"
-            for memory in memory_types['fact'][:3]:
-                memory_context += f"• {memory['content']}\n"
-        
-        # Add preferences
-        if 'preference' in memory_types:
-            memory_context += "Their preferences:\n"
-            for memory in memory_types['preference'][:2]:
-                memory_context += f"• {memory['content']}\n"
-        
-        # Add current situations
-        if 'situation' in memory_types:
-            memory_context += "Current situations:\n"
-            for memory in memory_types['situation'][:2]:
-                memory_context += f"• {memory['content']}\n"
-        
-        # Add emotions
-        if 'emotion' in memory_types:
-            memory_context += "Their emotional state:\n"
-            for memory in memory_types['emotion'][:2]:
-                memory_context += f"• {memory['content']}\n"
-        
-        memory_context += "\n"
+        memory_context = "\n--- LONG-TERM MEMORIES ---\n"
+        memory_context += "Here are things you remember from previous conversations:\n"
+        for memory in relevant_memories[:5]:
+            # This check is crucial: it prevents the AI from "remembering" what was just said.
+            if user_query.lower() not in memory['metadata'].get('source_message', '').lower():
+                 memory_context += f"- {memory['content']}\n"
     
-    # Build the enhanced prompt with better fallback responses
-    final_prompt = f"""You are Clario, a helpful AI companion who remembers what users tell you about their lives.
+    # If no relevant long-term memories are found after filtering, clear the context.
+    if len(memory_context.splitlines()) < 3:
+        memory_context = ""
 
-RESPONSE GUIDELINES:
-- Never reference or assume past events, situations, or decisions unless they are explicitly listed in verified information.
-- Be empathetic and supportive, especially for emotional topics
-- Reference what you remember about the user when relevant
-- Keep responses conversational and natural (1-3 sentences typically)
-- For conflicts/arguments, help them think through the situation
-- Don't make assumptions about events not mentioned in your memories
-- Be honest if you don't remember something specific
 
-{conversation_context}{memory_context}CURRENT MESSAGE: "{user_query}"
+    # 3. Build the context from the current conversation
+    conversation_context = ""
+    if chat_history:
+        conversation_context = "\n--- CURRENT CONVERSATION HISTORY ---\n"
+        for msg in chat_history[-4:]:
+            role_label = "User" if msg.role == "user" else "Clario (You)"
+            conversation_context += f"{role_label}: {msg.content}\n"
 
-CONTEXT:
-- User's sentiment: {sentiment}
-{"- You have memories about this user's life" if has_memories else "- This is a new user with no stored history"}
-
-For the current message about apologizing after a fight with their best friend:
-- This seems to be about a conflict situation
-- Help them process their feelings
-- Encourage healthy communication
-- Ask clarifying questions to understand better
-
-Respond as their supportive AI companion who cares about their wellbeing."""
+    # 4. Assemble the final prompt
+    final_prompt = f"""{system_instruction}
+{memory_context}
+{conversation_context}
+--- TASK ---
+Respond to the user's latest message based on the context above.
+User's message: "{user_query}"
+"""
 
     return final_prompt

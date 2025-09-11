@@ -10,19 +10,19 @@ import os
 safety_settings = [
     {
         "category": "HARM_CATEGORY_HARASSMENT",
-        "threshold": "BLOCK_ONLY_HIGH"  # Instead of BLOCK_NONE
+        "threshold": "BLOCK_NONE"
     },
     {
-        "category": "HARM_CATEGORY_HATE_SPEECH", 
-        "threshold": "BLOCK_ONLY_HIGH"
+        "category": "HARM_CATEGORY_HATE_SPEECH",
+        "threshold": "BLOCK_NONE"
     },
     {
         "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-        "threshold": "BLOCK_ONLY_HIGH"
+        "threshold": "BLOCK_NONE"
     },
     {
         "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
-        "threshold": "BLOCK_ONLY_HIGH"
+        "threshold": "BLOCK_NONE"
     }
 ]
 
@@ -51,11 +51,11 @@ async def call_ai_model_with_fallback(prompt: str, max_retries: int = 2) -> str:
             )
             
             # Better response validation
-            if response.text and response.text.strip():
+            if response.parts:
                 logger.info("Gemini call successful")
                 return response.text.strip()
             else:
-                logger.warning(f"Gemini returned empty response on attempt {attempt + 1}")
+                logger.warning(f"Gemini returned empty response on attempt {attempt + 1}. Finish reason: {response.prompt_feedback}")
                 if attempt < max_retries - 1:
                     await asyncio.sleep(2 ** attempt)  # Exponential backoff
                     continue
@@ -130,8 +130,8 @@ async def call_ai_for_json_with_fallback(prompt: str, max_retries: int = 2) -> D
                 safety_settings=safety_settings
             )
             
-            if not response.text:
-                logger.warning(f"Gemini returned empty response on JSON attempt {attempt + 1}")
+            if not response.parts:
+                logger.warning(f"Gemini returned empty response on JSON attempt {attempt + 1}. Finish reason: {response.prompt_feedback}")
                 if attempt < max_retries - 1:
                     await asyncio.sleep(1)
                     continue
