@@ -21,6 +21,9 @@ import IPSVG from './assets/svg ip.svg';
 import SectionSVG from './assets/clario section.svg';
 import InstagramSVG from './assets/Instagram.svg';
 import GooGleSVG from './assets/goo_gle.svg';
+import WhatsAppSVG from './assets/whatsapp.svg';
+import FacetimeSVG from './assets/FaceTime.svg';
+
 import HeroStyles from './HeroStyles';
 
 const IS_PRODUCTION = process.env.REACT_APP_ENVIRONMENT === 'production';
@@ -317,6 +320,8 @@ export const HeroSection = () => {
                     Question: Why would I even use Clario?
                   </p>
                 </div>
+                
+                
                 <p className="answer-text" style={{
                   color: '#000',
                   fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
@@ -332,6 +337,7 @@ export const HeroSection = () => {
                 }}>
                   Because advice is only good when it’s personal. Clario grows with you, so every suggestion fits you, not just the question you asked.
                 </p>
+                
                 <p className="suggestion-text-container" style={{
                   margin: 'clamp(1rem, 2.5vw, 4rem) 0 0 0',
                   wordBreak: 'break-word',
@@ -360,12 +366,69 @@ export const HeroSection = () => {
                     I'm sure clario will change your life.
                   </span>
                 </p>
+                <img
+                src={GooGleSVG}
+                alt="Google"
+                style={{
+                  position: 'absolute',
+                  width: 'clamp(170px, 10vw, 80px)',
+                  height: 'auto',
+                  right: '-270px',
+                  top: '15%',
+                  transform: 'translateY(-50%)',
+                  zIndex: 2
+                }}
+              />
+              
+              {/* Add WhatsApp SVG */}
+              <img
+                src={WhatsAppSVG}
+                alt="WhatsApp"
+                style={{
+                  position: 'absolute',
+                  width: 'clamp(170px, 10vw, 80px)',
+                  height: 'auto',
+                  right: '-350px',
+                  bottom: '250px',
+                  zIndex: 2
+                }}
+                
+              />
+              <img
+                src={FacetimeSVG}
+                alt="Google"
+                style={{
+                  position: 'absolute',
+                  width: 'clamp(180px, 10vw, 80px)',
+                  height: 'auto',
+                  right: '770px',
+                  bottom: '150px',
+                  transform: 'translateY(-50%)',
+                  zIndex: 2
+                }}
+              />
+              
+              {/* Add WhatsApp SVG */}
+              <img
+                src={InstagramSVG}
+                alt="WhatsApp"
+                style={{
+                  position: 'absolute',
+                  width: 'clamp(170px, 10vw, 80px)',
+                  height: 'auto',
+                  right: '700px',
+                  bottom: '100px',
+                  zIndex: 2
+                }}
+                
+              />
               </div>
               
-            </div>
+            </div> 
           </div>
+          
           <div className="normal-background" style={{
-            marginTop: '395px',
+            marginTop: '345px',
             marginLeft: '0'
           }}>
             <p className="feature-section-p" style={{
@@ -442,118 +505,61 @@ export const HeroSection = () => {
               display: 'flex',
               justifyContent: 'flex-start',
               alignItems: 'center',
-              margin: '0 0 1rem 0',
-              maxWidth: '100%'
+              margin: '0 0 8rem 0',
+              maxWidth: '100%',
+              width: '100vw', // Make it full viewport width
+              position: 'relative',
+              left: '50%',
+              transform: 'translateX(-50%)', // Center the container
+              overflow: 'hidden' // Prevent overflow
             }}>
               <img
                 src={Group686SVG}
                 alt="Rectangle"
                 style={{
-                  width: 'min(100%, 1314px)',
-                  height: '900px',
-                  maxHeight: '100vh',
+                  width: '100%', // Full width of container
+                  height: 'auto', // Maintain aspect ratio
+                  maxHeight: '100%', // Limit height
                   flexShrink: 0,
-                  borderRadius: '25px',
-                  border: '1px solid #CFCFAF',
-                  objectFit: 'cover'
+                  objectFit: 'contain' // Ensure the whole image is visible
                 }}
               />
             </div>
             <div className="new-sections-container" style={{
               display: 'flex',
               flexDirection: 'row',
-              flexWrap: 'nowrap',
-              gap: window.innerWidth <= 768 ? 'clamp(1rem, 2vw, 2rem)' : 'clamp(4rem, 5vw, 5rem)',
+              flexWrap: 'nowrap', // Changed from 'wrap' to 'nowrap' to prevent wrapping
+              justifyContent: 'space-between',
               alignItems: 'flex-start',
-              margin: '10rem 0'
+              width: 'min(95%, 1250px)', // Increased width to accommodate more spacing
+              margin: 'clamp(2rem, 4vw, 4rem) auto',
+              gap: 'clamp(4rem, 8vw, 8rem)' // Moderate gap that won't cause wrapping
             }}>
-              <div className="section-container" style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',              
-                marginLeft: window.innerWidth > 768 ? '2rem' : '0'
-              }}>
-                <h2 className="section-heading" style={{
-                  color: '#000',
-                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: 'clamp(24px, 6vw, 28px)',
-                  fontStyle: 'normal',
-                  fontWeight: 600,
-                  lineHeight: '30px',
-                  textAlign: 'left',
-                  margin: '0 0 1.5rem 0rem',
-                  whiteSpace: 'pre-wrap'
-                }}>
+              <div className="section-container">
+                <h3 className="section-heading">
                   Help, Right When You Need It
-                </h2>
-                <p className="section-subtext" style={{
-                  color: '#1E1E1E',
-                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: 'clamp(16px, 5vw, 20px)',
-                  fontStyle: 'normal',
-                  fontWeight: 400,
-                  lineHeight: 'normal',
-                  textAlign: 'left',
-                  margin: '0 0 1.5rem 0rem',
-                  whiteSpace: 'pre-wrap'
-                }}>
+                </h3>
+                <p className="section-subtext">
                   Clario spots what’s on your screen and drops help the moment you need it.
                 </p>
                 <img
-                  className="section-image"
-                  src={SectionSVG}
-                  alt="Real-Time Understanding"
-                  style={{
-                    height: 'clamp(200px, 60vw, 260px)',
-                    flexShrink: 0,
-                    borderRadius: '25px',
-                    objectFit: 'cover',
-                    display: 'block',
-                  }}
-                />
+                    src={SectionSVG}
+                    alt="Clario Section"
+                    className="section-image"
+                    style={{ marginTop: "55px" }} // Added margin to push image down
+                  />
               </div>
-              <div className="section-container" style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start'
-              }}>
-                <h2 className="section-heading" style={{
-                  color: '#000',
-                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: 'clamp(24px, 6vw, 28px)',
-                  fontStyle: 'normal',
-                  fontWeight: 600,
-                  lineHeight: '30px',
-                  textAlign: 'left',
-                  margin: '0 0 1.5rem 0rem',
-                  whiteSpace: 'pre-wrap'
-                }}>
+              <div className="section-container">
+                <h3 className="section-heading">
                   Growth, One Chat at a Time
-                </h2>
-                <p className="section-subtext" style={{
-                  color: '#1E1E1E',
-                  fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
-                  fontSize: 'clamp(16px, 5vw, 20px)',
-                  fontStyle: 'normal',
-                  fontWeight: 400,
-                  lineHeight: 'normal',
-                  textAlign: 'left',
-                  margin: '0 0 1.5rem 0rem',
-                  whiteSpace: 'pre-wrap'
-                }}>
+                </h3>
+                <p className="section-subtext">
                   It remembers your choices, gives weekly nudges, and chats with you on an emotional level.
                 </p>
                 <img
-                  className="section-image"
                   src={IPSVG}
-                  alt="Smart Replies"
-                  style={{
-                    height: 'clamp(200px, 60vw, 260px)',
-                    flexShrink: 0,
-                    borderRadius: '25px',
-                    objectFit: 'cover',
-                    display: 'block',
-                  }}
+                  alt="SVG IP"
+                  className="section-image"
                 />
               </div>
             </div>
@@ -561,7 +567,8 @@ export const HeroSection = () => {
               width: 'min(100%, 1221px)',
               whiteSpace: 'pre-wrap',
               textAlign: 'left',
-              margin: '0 0 1rem 0'
+              margin: '0 0 1rem 0',
+              marginTop: '150px'
             }}>
               <span style={{
                 color: '#3D74B6',
@@ -644,9 +651,13 @@ export const HeroSection = () => {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            alignItems: 'center'
+            alignItems: 'flex-start'
           }}>
-            <div className="think-smarter-texts">
+            <div className="think-smarter-texts" style={{
+              textAlign: 'left',
+              margin: '0 0 0 clamp(2rem, 10%, 10rem)'
+            }}>
+
               <p className="think-smarter-text-first" style={{
                 color: '#FFF',
                 fontFamily: '"SF UI Display", -apple-system, BlinkMacSystemFont, sans-serif',
@@ -827,7 +838,7 @@ export const HeroSection = () => {
             fontWeight: 400,
             lineHeight: 'normal',
             margin: '2rem auto 0',
-            maxWidth: 'min(100%, 820px)'
+            maxWidth: 'min(100%, 840px)'
           }}>
             Clario learns your patterns, remembers what matters, and gives you honest, timely advice to help you grow whether in conversations, decisions, or daily life
           </p>
@@ -1690,3 +1701,5 @@ export const GoogleCallback = () => {
     </div>
   );
 };
+
+
